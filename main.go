@@ -60,7 +60,6 @@ var (
 	verbose  bool = false
 
 	defsleep    time.Duration = 1 * time.Second
-	opentries   int           = 30
 	trytimes    int           = 45
 	locktimeout int           = 60
 
@@ -290,46 +289,14 @@ func wzPackList() {
 					db, err := bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout})
 					if err != nil {
 
-						if !fileExists(dbf) {
+						fmt.Printf("Can`t open db for delayed compaction error | DB [%s] | %v\n", dbf, err)
+						keymutex.Unlock(dbf)
 
-							fmt.Printf("Can`t open db for delayed compaction error | DB [%s] | %v\n", dbf, err)
-							keymutex.Unlock(dbf)
-
-							if ignore {
-								continue
-							}
-
-							return
-
+						if ignore {
+							continue
 						}
 
-						tries := 0
-
-						for itry := 0; itry <= opentries; itry++ {
-
-							tries++
-
-							db, err = bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout})
-							if err == nil {
-								break
-							}
-
-							time.Sleep(defsleep)
-
-						}
-
-						if tries == opentries {
-
-							fmt.Printf("Can`t open db for delayed compaction error | DB [%s] | %v\n", dbf, err)
-							keymutex.Unlock(dbf)
-
-							if ignore {
-								continue
-							}
-
-							return
-
-						}
+						return
 
 					}
 					defer db.Close()
@@ -618,23 +585,13 @@ func wzPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			db, err := bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout})
 			if err != nil {
 
-				if !fileExists(dbf) {
+				fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				keymutex.Unlock(dbf)
 
-					fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-					keymutex.Unlock(dbf)
+				err = pfile.Close()
+				if err != nil {
 
-					err = pfile.Close()
-					if err != nil {
-
-						fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
-
-						if ignore {
-							continue
-						}
-
-						return
-
-					}
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
 
 					if ignore {
 						continue
@@ -644,46 +601,11 @@ func wzPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				}
 
-				tries := 0
-
-				for itry := 0; itry <= opentries; itry++ {
-
-					tries++
-
-					db, err = bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout})
-					if err == nil {
-						break
-					}
-
-					time.Sleep(defsleep)
-
+				if ignore {
+					continue
 				}
 
-				if tries == opentries {
-
-					fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-					keymutex.Unlock(dbf)
-
-					err = pfile.Close()
-					if err != nil {
-
-						fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
-
-						if ignore {
-							continue
-						}
-
-						return
-
-					}
-
-					if ignore {
-						continue
-					}
-
-					return
-
-				}
+				return
 
 			}
 			defer db.Close()
@@ -1345,48 +1267,15 @@ func wzPackSingle() {
 	db, err := bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout})
 	if err != nil {
 
-		if !fileExists(dbf) {
+		fmt.Printf("Can`t open db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 
-			fmt.Printf("Can`t open db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-
-			err = pfile.Close()
-			if err != nil {
-				fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
-				os.Exit(1)
-			}
-
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
 			os.Exit(1)
-
 		}
 
-		tries := 0
-
-		for itry := 0; itry <= opentries; itry++ {
-
-			tries++
-
-			db, err = bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout})
-			if err == nil {
-				break
-			}
-
-			time.Sleep(defsleep)
-
-		}
-
-		if tries == opentries {
-
-			fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-
-			err = pfile.Close()
-			if err != nil {
-				fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
-				os.Exit(1)
-			}
-
-			os.Exit(1)
-
-		}
+		os.Exit(1)
 
 	}
 	defer db.Close()
@@ -2075,48 +1964,15 @@ func wzUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 		db, err := bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout, ReadOnly: true})
 		if err != nil {
 
-			if !fileExists(dbf) {
-
-				if !progress {
-					fmt.Printf("Can`t open db file error | DB [%s] | %v\n", dbf, err)
-				}
-
-				if ignore || ignorenot {
-					continue
-				}
-
-				return
-
+			if !progress {
+				fmt.Printf("Can`t open db file error | DB [%s] | %v\n", dbf, err)
 			}
 
-			tries := 0
-
-			for itry := 0; itry <= opentries; itry++ {
-
-				tries++
-
-				db, err = bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout})
-				if err == nil {
-					break
-				}
-
-				time.Sleep(defsleep)
-
+			if ignore || ignorenot {
+				continue
 			}
 
-			if tries == opentries {
-
-				if !progress {
-					fmt.Printf("Can`t open db file error | DB [%s] | %v\n", dbf, err)
-				}
-
-				if ignore {
-					continue
-				}
-
-				return
-
-			}
+			return
 
 		}
 		defer db.Close()
@@ -2469,34 +2325,8 @@ func wzUnpackSingle() {
 
 	db, err := bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout, ReadOnly: true})
 	if err != nil {
-
-		if !fileExists(dbf) {
-			fmt.Printf("Can`t open db file error | DB [%s] | %v\n", dbf, err)
-			os.Exit(1)
-		}
-
-		tries := 0
-
-		for itry := 0; itry <= opentries; itry++ {
-
-			tries++
-
-			db, err = bolt.Open(dbf, bfilemode, &bolt.Options{Timeout: timeout})
-			if err == nil {
-				break
-			}
-
-			time.Sleep(defsleep)
-
-		}
-
-		if tries == opentries {
-
-			fmt.Printf("Can`t open db file error | DB [%s] | %v\n", dbf, err)
-			os.Exit(1)
-
-		}
-
+		fmt.Printf("Can`t open db file error | DB [%s] | %v\n", dbf, err)
+		os.Exit(1)
 	}
 	defer db.Close()
 
@@ -2950,7 +2780,6 @@ func init() {
 	flag.StringVar(&tmpdir, "tmpdir", tmpdir, "--tmpdir=/tmp/wza - temporary directory for split file list between threads")
 	flag.Int64Var(&threads, "threads", threads, "--threads=1 - for parallel mass pack/unpack (compaction (with --overwrite) is single threaded, for safety), max value: 256")
 	flag.IntVar(&locktimeout, "locktimeout", locktimeout, "locktimeout=60 - max timeout for open bolt archive, per try, max value: 3600")
-	flag.IntVar(&opentries, "opentries", opentries, "opentries=30 - max tries to open bolt archive (default sleep = 1 between tries), max value: 1000")
 	flag.IntVar(&trytimes, "trytimes", trytimes, "trytimes=45 - max tries to take a virtual lock for bolt archive (default sleep = 1 between tries), (with --pack && --list=), max value: 1000")
 	flag.BoolVar(&progress, "progress", progress, "--progress - enables progress bar mode (incompatible with --verbose)")
 	flag.BoolVar(&verbose, "verbose", verbose, "--verbose - enables verbose mode (incompatible with --progress)")
@@ -3062,9 +2891,6 @@ func init() {
 
 	mchlocktimeout := RBInt(locktimeout, 1, 3600)
 	check(mchlocktimeout, fmt.Sprintf("%d", locktimeout), doexit)
-
-	mchopentries := RBInt(opentries, 1, 1000)
-	check(mchopentries, fmt.Sprintf("%d", opentries), doexit)
 
 	mchtrytimes := RBInt(trytimes, 1, 1000)
 	check(mchtrytimes, fmt.Sprintf("%d", trytimes), doexit)
