@@ -384,7 +384,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 			if FileExists(dabs) && !overwrite {
 				loopcount++
-				db.Close()
 				bar.IncrBy(1)
 				continue
 			}
@@ -399,7 +398,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			if err != nil {
 
 				fmt.Printf("Can`t get data by key from db error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
-				db.Close()
 
 				if ignore {
 					continue
@@ -419,7 +417,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			if err != nil {
 
 				fmt.Printf("Read header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", headbuffer, rkey, dbf, err)
-				db.Close()
 
 				if ignore {
 					continue
@@ -435,7 +432,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			if err != nil {
 
 				fmt.Printf("Read binary header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", hread, rkey, dbf, err)
-				db.Close()
 
 				if ignore {
 					continue
@@ -473,7 +469,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 				if err != nil && err != io.EOF {
 
 					fmt.Printf("Can`t read tee crc data error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
-					db.Close()
 
 					if ignore {
 						continue
@@ -490,7 +485,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 				if crc != rcrc {
 
 					fmt.Printf("CRC read file error | File [%s] | DB [%s] | Have CRC [%v] | Awaiting CRC [%v]\n", rkey, dbf, rcrc, crc)
-					db.Close()
 
 					if ignore {
 						continue
@@ -504,7 +498,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 				if err != nil && err != io.EOF {
 
 					fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-					db.Close()
 
 					if ignore {
 						continue
@@ -520,7 +513,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 				if err != nil && err != io.EOF {
 
 					fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-					db.Close()
 
 					if ignore {
 						continue
@@ -536,7 +528,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			if err != nil {
 
 				fmt.Printf("Write full buffer write to file error | File [%s] | Path [%s] | %v\n", rkey, dabs, err)
-				db.Close()
 
 				if ignore {
 					continue
@@ -549,7 +540,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			if err != nil {
 
 				fmt.Printf("Can`t change time on file error | File [%s] | Path [%s] | %v\n", rkey, dabs, err)
-				db.Close()
 
 				if ignore {
 					continue
@@ -584,13 +574,14 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 			}
 
+			db.Close()
+
 			if keycount == loopcount {
 
 				err = RemoveFileDB(dbf)
 				if err != nil {
 
 					fmt.Printf("Can`t remove db file error | DB [%s] | %v\n", dbf, err)
-					db.Close()
 
 					if ignore {
 						continue
@@ -607,7 +598,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			} else {
 
 				fmt.Printf("Keys count in db != extracted file, | DB [%s] | DB Keys [%d] | Extracted Files [%d] | %v\n", dbf, keycount, loopcount, err)
-				db.Close()
 
 				if ignore {
 					continue
@@ -617,7 +607,6 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 			}
 
-			db.Close()
 			continue
 
 		}
@@ -641,6 +630,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 }
 
 func ZAUnpackSingle() {
+	defer wg.Done()
 
 	// Wait Group
 
@@ -732,7 +722,6 @@ func ZAUnpackSingle() {
 
 		if FileExists(dabs) && !overwrite {
 			loopcount++
-			db.Close()
 			continue
 		}
 
@@ -746,7 +735,6 @@ func ZAUnpackSingle() {
 		if err != nil {
 
 			fmt.Printf("Can`t get data by key from db error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
-			db.Close()
 			continue
 
 		}
@@ -772,7 +760,6 @@ func ZAUnpackSingle() {
 		if err != nil {
 
 			fmt.Printf("Read binary header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", hread, rkey, dbf, err)
-			db.Close()
 			continue
 
 		}
@@ -805,7 +792,6 @@ func ZAUnpackSingle() {
 			if err != nil && err != io.EOF {
 
 				fmt.Printf("Can`t read tee crc data error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
-				db.Close()
 				continue
 
 			}
@@ -817,7 +803,6 @@ func ZAUnpackSingle() {
 			if crc != rcrc {
 
 				fmt.Printf("CRC read file error | File [%s] | DB [%s] | Have CRC [%v] | Awaiting CRC [%v]\n", rkey, dbf, rcrc, crc)
-				db.Close()
 				continue
 
 			}
@@ -826,7 +811,6 @@ func ZAUnpackSingle() {
 			if err != nil && err != io.EOF {
 
 				fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-				db.Close()
 				continue
 
 			}
@@ -837,7 +821,6 @@ func ZAUnpackSingle() {
 			if err != nil && err != io.EOF {
 
 				fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-				db.Close()
 				continue
 
 			}
@@ -848,7 +831,6 @@ func ZAUnpackSingle() {
 		if err != nil {
 
 			fmt.Printf("Write full buffer write to file error | File [%s] | Path [%s] | %v\n", rkey, dabs, err)
-			db.Close()
 			continue
 
 		}
@@ -857,7 +839,6 @@ func ZAUnpackSingle() {
 		if err != nil {
 
 			fmt.Printf("Can`t change time on file error | File [%s] | Path [%s] | %v\n", rkey, dabs, err)
-			db.Close()
 			continue
 
 		}
@@ -876,10 +857,11 @@ func ZAUnpackSingle() {
 		if err != nil {
 
 			fmt.Printf("Can`t count keys of files in db bucket error | DB [%s] | %v\n", dbf, err)
-			db.Close()
 			os.Exit(1)
 
 		}
+
+		db.Close()
 
 		if keycount == loopcount {
 
@@ -887,7 +869,6 @@ func ZAUnpackSingle() {
 			if err != nil {
 
 				fmt.Printf("Can`t remove db file error | DB [%s] | %v\n", dbf, err)
-				db.Close()
 				os.Exit(1)
 
 			}
@@ -899,12 +880,10 @@ func ZAUnpackSingle() {
 		} else {
 
 			fmt.Printf("Keys count in db != extracted file, | DB [%s] | DB Keys [%d] | Extracted Files [%d] | %v\n", dbf, keycount, loopcount, err)
-			db.Close()
 			os.Exit(1)
 
 		}
 
-		db.Close()
 		os.Exit(0)
 
 	}
