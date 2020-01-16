@@ -103,7 +103,7 @@ func init() {
 	flag.BoolVar(&pack, "pack", pack, "--pack - enables pack mode for regular files from list (with --list) or single regular file (with --single=) to bolt archives")
 	flag.BoolVar(&unpack, "unpack", unpack, "--unpack - enables unpack mode for bolt archives from list (--list=) or single bolt archive (with --single=) to regular files")
 	flag.StringVar(&ifilemode, "bfilemode", ifilemode, "--bfilemode=0640 - (0600-0666) new bolt archive mode with uid/gid from current user/group (default 0640)")
-	flag.Int64Var(&fmaxsize, "fmaxsize", fmaxsize, "--fmaxsize=1048576 - max allowed size of regular file to write in bolt archives, otherwise skip, max value: 536870912 bytes")
+	flag.Int64Var(&fmaxsize, "fmaxsize", fmaxsize, "--fmaxsize=1048576 - max allowed size of regular file to write in bolt archives, otherwise skip, max value: 33554432 bytes")
 	flag.BoolVar(&overwrite, "overwrite", overwrite, "--overwrite - enables overwrite regular files or files in bolt archives when do pack/unpack")
 	flag.BoolVar(&ignore, "ignore", ignore, "--ignore - enables skip all errors mode when do mass pack/unpack mode from list (if threads > 1, ignore always enabled for continue working threads)")
 	flag.BoolVar(&ignorenot, "ignore-not", ignorenot, "--ignore-not - enables skip only file not exists/permission denied errors mode when do mass pack/unpack mode from list")
@@ -208,7 +208,7 @@ func init() {
 
 	}
 
-	mchfmaxsize := RBInt64(fmaxsize, 1, 536870912)
+	mchfmaxsize := RBInt64(fmaxsize, 1, 33554432)
 	Check(mchfmaxsize, fmt.Sprintf("%d", fmaxsize), DoExit)
 
 	if tmpdir != "" {

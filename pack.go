@@ -502,18 +502,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			perbucket = 128
 		case size >= 8388608 && size < 16777216:
 			perbucket = 64
-		case size >= 16777216 && size < 33554432:
+		case size >= 16777216:
 			perbucket = 32
-		case size >= 33554432 && size < 67108864:
-			perbucket = 16
-		case size >= 67108864 && size < 134217728:
-			perbucket = 8
-		case size >= 134217728 && size < 268435456:
-			perbucket = 4
-		case size >= 268435456 && size < 536870912:
-			perbucket = 2
-		case size >= 536870912:
-			perbucket = 1
 		}
 
 		key := false
@@ -1626,18 +1616,8 @@ func ZAPackSingle() {
 		perbucket = 128
 	case size >= 8388608 && size < 16777216:
 		perbucket = 64
-	case size >= 16777216 && size < 33554432:
+	case size >= 16777216:
 		perbucket = 32
-	case size >= 33554432 && size < 67108864:
-		perbucket = 16
-	case size >= 67108864 && size < 134217728:
-		perbucket = 8
-	case size >= 134217728 && size < 268435456:
-		perbucket = 4
-	case size >= 268435456 && size < 536870912:
-		perbucket = 2
-	case size >= 536870912:
-		perbucket = 1
 	}
 
 	pfile, err := os.OpenFile(abs, os.O_RDONLY, os.ModePerm)
