@@ -47,9 +47,11 @@ var (
 	progress bool = false
 	verbose  bool = false
 
-	defsleep    time.Duration = 1 * time.Second
-	trytimes    int           = 45
-	locktimeout int           = 60
+	defsleep time.Duration = 1 * time.Second
+
+	trytimes    int = 5
+	opentries   int = 5
+	locktimeout int = 5
 
 	list                  string
 	single                string
@@ -109,8 +111,9 @@ func init() {
 	flag.BoolVar(&disablecompaction, "disablecompaction", disablecompaction, "--disablecompaction - disables delayed compaction of bolt archives when do pack (with --overwrite)")
 	flag.StringVar(&tmpdir, "tmpdir", tmpdir, "--tmpdir=/tmp/wza - temporary directory for split file list between threads")
 	flag.Int64Var(&threads, "threads", threads, "--threads=1 - for parallel mass pack/unpack (compaction (with --overwrite) is single threaded, for safety), max value: 256")
-	flag.IntVar(&locktimeout, "locktimeout", locktimeout, "locktimeout=60 - max timeout for open bolt archive, per try, max value: 3600")
-	flag.IntVar(&trytimes, "trytimes", trytimes, "trytimes=45 - max tries to take a virtual lock for bolt archive (default sleep = 1 between tries), (with --pack && --list=), max value: 1000")
+	flag.IntVar(&trytimes, "trytimes", trytimes, "trytimes=5 - max tries to take a virtual lock for bolt archive (default sleep = 1 between tries), (with --pack && --list=), max value: 1000")
+	flag.IntVar(&opentries, "opentries", opentries, "opentries=5 - max tries to open bolt archive (default sleep = 1 between tries), (with --pack && --list=), max value: 1000")
+	flag.IntVar(&locktimeout, "locktimeout", locktimeout, "locktimeout=5 - max timeout for open bolt archive, per try, max value: 3600")
 	flag.BoolVar(&progress, "progress", progress, "--progress - enables progress bar mode (incompatible with --verbose)")
 	flag.BoolVar(&verbose, "verbose", verbose, "--verbose - enables verbose mode (incompatible with --progress)")
 	flag.BoolVar(&vprint, "version", vprint, "--version - prints version")
@@ -219,11 +222,14 @@ func init() {
 	mchthreads := RBInt64(threads, 1, 256)
 	Check(mchthreads, fmt.Sprintf("%d", threads), DoExit)
 
-	mchlocktimeout := RBInt(locktimeout, 1, 3600)
-	Check(mchlocktimeout, fmt.Sprintf("%d", locktimeout), DoExit)
-
 	mchtrytimes := RBInt(trytimes, 1, 1000)
 	Check(mchtrytimes, fmt.Sprintf("%d", trytimes), DoExit)
+
+	mchopentries := RBInt(opentries, 1, 1000)
+	Check(mchopentries, fmt.Sprintf("%d", opentries), DoExit)
+
+	mchlocktimeout := RBInt(locktimeout, 1, 3600)
+	Check(mchlocktimeout, fmt.Sprintf("%d", locktimeout), DoExit)
 
 	switch {
 	case delete:

@@ -7,8 +7,57 @@ import (
 	"os"
 	"os/user"
 	"strconv"
+	"time"
 	"unsafe"
 )
+
+// Bolt Open Handlers
+
+func BoltOpenWrite(dbpath string, fmode os.FileMode, timeout time.Duration, opentries int) (*bolt.DB, error) {
+
+	i := 0
+
+	for {
+
+		i++
+
+		db, err := bolt.Open(dbpath, fmode, &bolt.Options{Timeout: timeout})
+		if err == nil {
+			return db, err
+		}
+
+		if i >= opentries {
+			return db, err
+		}
+
+		time.Sleep(defsleep)
+
+	}
+
+}
+
+func BoltOpenRead(dbpath string, fmode os.FileMode, timeout time.Duration, opentries int) (*bolt.DB, error) {
+
+	i := 0
+
+	for {
+
+		i++
+
+		db, err := bolt.Open(dbpath, fmode, &bolt.Options{Timeout: timeout, ReadOnly: true})
+		if err == nil {
+			return db, err
+		}
+
+		if i >= opentries {
+			return db, err
+		}
+
+		time.Sleep(defsleep)
+
+	}
+
+}
 
 // Determine Endianess Handler
 
