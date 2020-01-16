@@ -185,7 +185,7 @@ func ZAPackList() {
 
 		go ZAPackListThread(keymutex, mcmp, listname, t, p, name)
 
-		time.Sleep(time.Duration(100) * time.Millisecond)
+		time.Sleep(time.Duration(250) * time.Millisecond)
 
 	}
 
