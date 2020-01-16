@@ -29,6 +29,7 @@ type Header struct {
 
 type KeysIter struct {
 	key string
+	val string
 }
 
 // Global Variables
@@ -60,6 +61,7 @@ var (
 	ifilemode             string
 	bfilemode             os.FileMode
 	fmaxsize              int64 = 1048576
+	perbucket             int   = 1024
 	overwrite             bool  = false
 	ignore                bool  = false
 	ignorenot             bool  = false
@@ -113,7 +115,7 @@ func init() {
 	flag.Int64Var(&threads, "threads", threads, "--threads=1 - for parallel mass pack/unpack (compaction (with --overwrite) is single threaded, for safety), max value: 256")
 	flag.IntVar(&trytimes, "trytimes", trytimes, "trytimes=5 - max tries to take a virtual lock for bolt archive (default sleep = 1 between tries), (with --pack && --list=), max value: 1000")
 	flag.IntVar(&opentries, "opentries", opentries, "opentries=5 - max tries to open bolt archive (default sleep = 1 between tries), (with --pack && --list=), max value: 1000")
-	flag.IntVar(&locktimeout, "locktimeout", locktimeout, "locktimeout=5 - max timeout for open bolt archive, per try, max value: 3600")
+	flag.IntVar(&locktimeout, "locktimeout", locktimeout, "locktimeout=60 - max timeout for open bolt archive, per try, max value: 3600")
 	flag.BoolVar(&progress, "progress", progress, "--progress - enables progress bar mode (incompatible with --verbose)")
 	flag.BoolVar(&verbose, "verbose", verbose, "--verbose - enables verbose mode (incompatible with --progress)")
 	flag.BoolVar(&vprint, "version", vprint, "--version - prints version")

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/eltaline/bolt"
 	"github.com/eltaline/mmutex"
@@ -141,10 +142,7 @@ func ZAPackList() {
 			}
 
 			if lc == partlines {
-
-				lc = 0
 				break
-
 			}
 
 			lc++
@@ -317,7 +315,10 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 	var vfilemode uint64
 
-	bucket := "default"
+	bucket := "wzd1"
+	ibucket := "index"
+	cbucket := "count"
+
 	timeout := time.Duration(locktimeout) * time.Second
 
 	rgxbolt := regexp.MustCompile(`(\.bolt$)`)
@@ -375,6 +376,11 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 		if shutdown {
 			return
 		}
+
+		start := time.Now()
+
+		keycount := 0
+		keybytes := 0
 
 		uri := scanner.Text()
 
@@ -487,6 +493,29 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 		}
 
+		switch {
+		case size >= 262144 && size < 1048576:
+			perbucket = 512
+		case size >= 1048576 && size < 4194304:
+			perbucket = 256
+		case size >= 4194304 && size < 8388608:
+			perbucket = 128
+		case size >= 8388608 && size < 16777216:
+			perbucket = 64
+		case size >= 16777216 && size < 33554432:
+			perbucket = 32
+		case size >= 33554432 && size < 67108864:
+			perbucket = 16
+		case size >= 67108864 && size < 134217728:
+			perbucket = 8
+		case size >= 134217728 && size < 268435456:
+			perbucket = 4
+		case size >= 268435456 && size < 536870912:
+			perbucket = 2
+		case size >= 536870912:
+			perbucket = 1
+		}
+
 		key := false
 
 		for i := 0; i < trytimes; i++ {
@@ -516,8 +545,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			}
 			defer pfile.Close()
 
-			rcrc := uint32(0)
 			wcrc := uint32(0)
+			rcrc := uint32(0)
 
 			db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries)
 			if err != nil {
@@ -575,7 +604,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			}
 
 			err = db.Update(func(tx *bolt.Tx) error {
-				_, err := tx.CreateBucketIfNotExists([]byte(bucket))
+				_, err := tx.CreateBucketIfNotExists([]byte(ibucket))
 				if err != nil {
 					return err
 				}
@@ -584,7 +613,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			})
 			if err != nil {
 
-				fmt.Printf("Can`t write file to db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				fmt.Printf("Can`t create index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
 				keymutex.Unlock(dbf)
 
@@ -609,10 +638,10 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 			}
 
-			keyexists, err := KeyExists(db, bucket, file)
+			keyexists, err := KeyExists(db, ibucket, file)
 			if err != nil {
 
-				fmt.Printf("Can`t check key of file in db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				fmt.Printf("Can`t check key of file in index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
 				keymutex.Unlock(dbf)
 
@@ -637,7 +666,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 			}
 
-			if keyexists && !overwrite {
+			if keyexists != "" && !overwrite {
 
 				if delete {
 
@@ -697,6 +726,333 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				}
 
 				continue
+
+			}
+
+			err = db.Update(func(tx *bolt.Tx) error {
+				_, err := tx.CreateBucketIfNotExists([]byte(cbucket))
+				if err != nil {
+					return err
+				}
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t create count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+				keymutex.Unlock(dbf)
+
+				err = pfile.Close()
+				if err != nil {
+
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			keybucket, err := BucketCount(db, cbucket)
+			if err != nil {
+
+				fmt.Printf("Can`t count buckets in count db bucket error | DB [%s] | %v\n", dbf, err)
+				db.Close()
+				keymutex.Unlock(dbf)
+
+				err = pfile.Close()
+				if err != nil {
+
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			if keybucket > uint64(0) && keyexists == "" {
+
+				lastbucket := fmt.Sprintf("wzd%d", keybucket)
+
+				keycount, err = KeyCountBucket(db, lastbucket)
+				if err != nil {
+
+					fmt.Printf("Can`t count keys of files in last db bucket error | DB [%s] | %v\n", dbf, err)
+					db.Close()
+					keymutex.Unlock(dbf)
+
+					err = pfile.Close()
+					if err != nil {
+
+						fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+						if ignore {
+							continue
+						}
+
+						return
+
+					}
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				keybytes, err = BucketStats(db, lastbucket)
+				if err != nil {
+
+					fmt.Printf("Can`t count bytes of files in last db bucket error | DB [%s] | %v\n", dbf, err)
+					db.Close()
+					keymutex.Unlock(dbf)
+
+					err = pfile.Close()
+					if err != nil {
+
+						fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+						if ignore {
+							continue
+						}
+
+						return
+
+					}
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if keycount >= perbucket || keybytes >= 536870912 {
+
+					bucket = fmt.Sprintf("wzd%d", keybucket+1)
+
+					nb := make([]byte, 8)
+					Endian.PutUint64(nb, keybucket+1)
+
+					err = db.Update(func(tx *bolt.Tx) error {
+
+						verr := errors.New("count bucket not exists")
+
+						b := tx.Bucket([]byte(cbucket))
+						if b != nil {
+							err = b.Put([]byte("counter"), []byte(nb))
+							if err != nil {
+								return err
+							}
+
+						} else {
+							return verr
+						}
+
+						return nil
+
+					})
+					if err != nil {
+
+						fmt.Printf("Can`t write bucket counter to count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+						db.Close()
+						keymutex.Unlock(dbf)
+
+						err = pfile.Close()
+						if err != nil {
+
+							fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+							if ignore {
+								continue
+							}
+
+							return
+
+						}
+
+						if ignore {
+							continue
+						}
+
+						return
+
+					}
+
+				} else {
+					bucket = lastbucket
+				}
+
+			} else if keyexists != "" && overwrite {
+
+				bucket = keyexists
+
+				keycount, err = KeyCountBucket(db, bucket)
+				if err != nil {
+
+					fmt.Printf("Can`t count keys of files in last db bucket error | DB [%s] | %v\n", dbf, err)
+					db.Close()
+					keymutex.Unlock(dbf)
+
+					err = pfile.Close()
+					if err != nil {
+
+						fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+						if ignore {
+							continue
+						}
+
+						return
+
+					}
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				keybytes, err = BucketStats(db, bucket)
+				if err != nil {
+
+					fmt.Printf("Can`t count bytes of files in last db bucket error | DB [%s] | %v\n", dbf, err)
+					db.Close()
+					keymutex.Unlock(dbf)
+
+					err = pfile.Close()
+					if err != nil {
+
+						fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+						if ignore {
+							continue
+						}
+
+						return
+
+					}
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+			} else {
+
+				nb := make([]byte, 8)
+				Endian.PutUint64(nb, uint64(1))
+
+				err = db.Update(func(tx *bolt.Tx) error {
+
+					verr := errors.New("count bucket not exists")
+
+					b := tx.Bucket([]byte(cbucket))
+					if b != nil {
+						err = b.Put([]byte("counter"), []byte(nb))
+						if err != nil {
+							return err
+						}
+
+					} else {
+						return verr
+					}
+
+					return nil
+
+				})
+				if err != nil {
+
+					fmt.Printf("Can`t write bucket counter to count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+					db.Close()
+					keymutex.Unlock(dbf)
+
+					err = pfile.Close()
+					if err != nil {
+
+						fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+						if ignore {
+							continue
+						}
+
+						return
+
+					}
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+			}
+
+			err = db.Update(func(tx *bolt.Tx) error {
+				_, err := tx.CreateBucketIfNotExists([]byte(bucket))
+				if err != nil {
+					return err
+				}
+
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t create db bucket error | Bucket [%s] | File [%s] | DB [%s] | %v\n", bucket, file, dbf, err)
+				db.Close()
+				keymutex.Unlock(dbf)
+
+				err = pfile.Close()
+				if err != nil {
+
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
 
 			}
 
@@ -896,10 +1252,18 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			}
 
 			err = db.Update(func(tx *bolt.Tx) error {
-				nb := tx.Bucket([]byte(bucket))
-				err = nb.Put([]byte(file), []byte(endbuffer.Bytes()))
-				if err != nil {
-					return err
+
+				verr := errors.New("bucket not exists")
+
+				b := tx.Bucket([]byte(bucket))
+				if b != nil {
+					err = b.Put([]byte(file), []byte(endbuffer.Bytes()))
+					if err != nil {
+						return err
+					}
+
+				} else {
+					return verr
 				}
 
 				return nil
@@ -907,7 +1271,52 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			})
 			if err != nil {
 
-				fmt.Printf("Can`t write file to db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				fmt.Printf("Can`t write file to db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+				keymutex.Unlock(dbf)
+
+				err = pfile.Close()
+				if err != nil {
+
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			err = db.Update(func(tx *bolt.Tx) error {
+
+				verr := errors.New("index bucket not exists")
+
+				b := tx.Bucket([]byte(ibucket))
+				if b != nil {
+					err = b.Put([]byte(file), []byte(bucket))
+					if err != nil {
+						return err
+					}
+
+				} else {
+					return verr
+				}
+
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t write key to index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
 				keymutex.Unlock(dbf)
 
@@ -951,9 +1360,17 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				var pdata []byte
 
 				err = db.View(func(tx *bolt.Tx) error {
-					nb := tx.Bucket([]byte(bucket))
-					pdata = nb.Get([]byte(file))
-					return nil
+
+					verr := errors.New("bucket not exists")
+
+					b := tx.Bucket([]byte(bucket))
+					if b != nil {
+						pdata = b.Get([]byte(file))
+						return nil
+					} else {
+						return verr
+					}
+
 				})
 				if err != nil {
 
@@ -978,7 +1395,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				hsizebuffer, err := pread.Read(headbuffer)
 				if err != nil {
 
-					fmt.Printf("Read header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", headbuffer, file, dbf, err)
+					fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", file, dbf, headbuffer, err)
 					db.Close()
 					keymutex.Unlock(dbf)
 
@@ -995,7 +1412,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				err = binary.Read(hread, Endian, &readhead)
 				if err != nil {
 
-					fmt.Printf("Read binary header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", hread, file, dbf, err)
+					fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", file, dbf, hread, err)
 					db.Close()
 					keymutex.Unlock(dbf)
 
@@ -1049,7 +1466,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			db.Close()
 			keymutex.Unlock(dbf)
 
-			if keyexists {
+			if keyexists != "" {
 
 				_, found := mcmp[dbf]
 				if !found {
@@ -1070,8 +1487,10 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 		}
 
+		elapsed := float64(time.Since(start)) / float64(time.Millisecond)
+
 		if verbose {
-			fmt.Printf("Packing file | File [%s] | Path [%s] | DB [%s]\n", file, abs, dbf)
+			fmt.Printf("Packing file | File [%s] | Path [%s] | Bucket [%s] | Past Count [%d] | Past Bytes [%d] | Elapsed [%f] | DB [%s]\n", file, abs, bucket, keycount, keybytes, elapsed, dbf)
 		}
 
 		if delete {
@@ -1119,7 +1538,12 @@ func ZAPackSingle() {
 
 	wg.Add(1)
 
+	start := time.Now()
+
 	var vfilemode uint64
+
+	keycount := 0
+	keybytes := 0
 
 	uri := single
 
@@ -1131,7 +1555,10 @@ func ZAPackSingle() {
 	dbn := filepath.Base(dir)
 	dbf := fmt.Sprintf("%s/%s.bolt", dir, dbn)
 
-	bucket := "default"
+	bucket := "wzd"
+	ibucket := "index"
+	cbucket := "count"
+
 	timeout := time.Duration(locktimeout) * time.Second
 
 	rgxbolt := regexp.MustCompile(`(\.bolt$)`)
@@ -1190,6 +1617,29 @@ func ZAPackSingle() {
 		os.Exit(0)
 	}
 
+	switch {
+	case size >= 262144 && size < 1048576:
+		perbucket = 512
+	case size >= 1048576 && size < 4194304:
+		perbucket = 256
+	case size >= 4194304 && size < 8388608:
+		perbucket = 128
+	case size >= 8388608 && size < 16777216:
+		perbucket = 64
+	case size >= 16777216 && size < 33554432:
+		perbucket = 32
+	case size >= 33554432 && size < 67108864:
+		perbucket = 16
+	case size >= 67108864 && size < 134217728:
+		perbucket = 8
+	case size >= 134217728 && size < 268435456:
+		perbucket = 4
+	case size >= 268435456 && size < 536870912:
+		perbucket = 2
+	case size >= 536870912:
+		perbucket = 1
+	}
+
 	pfile, err := os.OpenFile(abs, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		fmt.Printf("Can`t open file error | File [%s] | Path [%s] | %v\n", file, abs, err)
@@ -1204,7 +1654,7 @@ func ZAPackSingle() {
 	db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries)
 	if err != nil {
 
-		fmt.Printf("Can`t open db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 
 		err = pfile.Close()
 		if err != nil {
@@ -1233,7 +1683,7 @@ func ZAPackSingle() {
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(bucket))
+		_, err := tx.CreateBucketIfNotExists([]byte(ibucket))
 		if err != nil {
 			return err
 		}
@@ -1242,7 +1692,7 @@ func ZAPackSingle() {
 	})
 	if err != nil {
 
-		fmt.Printf("Can`t write file to db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		fmt.Printf("Can`t create index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 		db.Close()
 
 		err = pfile.Close()
@@ -1255,10 +1705,10 @@ func ZAPackSingle() {
 
 	}
 
-	keyexists, err := KeyExists(db, bucket, file)
+	keyexists, err := KeyExists(db, ibucket, file)
 	if err != nil {
 
-		fmt.Printf("Can`t check key of file in db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		fmt.Printf("Can`t check index key of file in index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 		db.Close()
 
 		err = pfile.Close()
@@ -1271,7 +1721,7 @@ func ZAPackSingle() {
 
 	}
 
-	if keyexists && !overwrite {
+	if keyexists != "" && !overwrite {
 
 		if delete {
 
@@ -1304,6 +1754,192 @@ func ZAPackSingle() {
 		}
 
 		os.Exit(0)
+
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(cbucket))
+		if err != nil {
+			return err
+		}
+		return nil
+
+	})
+	if err != nil {
+
+		fmt.Printf("Can`t create count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		db.Close()
+
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+			os.Exit(1)
+		}
+
+		os.Exit(1)
+
+	}
+
+	keybucket, err := BucketCount(db, cbucket)
+	if err != nil {
+
+		fmt.Printf("Can`t count buckets in count db bucket error | DB [%s] | %v\n", dbf, err)
+		db.Close()
+
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+			os.Exit(1)
+		}
+
+		os.Exit(1)
+
+	}
+
+	if keybucket > uint64(0) && keyexists == "" {
+
+		lastbucket := fmt.Sprintf("wzd%d", keybucket)
+
+		keycount, err := KeyCountBucket(db, lastbucket)
+		if err != nil {
+
+			fmt.Printf("Can`t count keys of files in last db bucket error | DB [%s] | %v\n", dbf, err)
+			db.Close()
+
+			err = pfile.Close()
+			if err != nil {
+				fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+				os.Exit(1)
+			}
+
+			os.Exit(1)
+
+		}
+
+		keybytes, err = BucketStats(db, lastbucket)
+		if err != nil {
+
+			fmt.Printf("Can`t count bytes of files in last db bucket error | DB [%s] | %v\n", dbf, err)
+			db.Close()
+
+			err = pfile.Close()
+			if err != nil {
+				fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+				os.Exit(1)
+			}
+
+			os.Exit(1)
+
+		}
+
+		if keycount >= perbucket || keybytes >= 536870912 {
+
+			bucket = fmt.Sprintf("wzd%d", keybucket+1)
+
+			nb := make([]byte, 8)
+			Endian.PutUint64(nb, keybucket+1)
+
+			err = db.Update(func(tx *bolt.Tx) error {
+
+				verr := errors.New("count bucket not exists")
+
+				b := tx.Bucket([]byte(cbucket))
+				if b != nil {
+					err = b.Put([]byte("counter"), []byte(nb))
+					if err != nil {
+						return err
+					}
+
+				} else {
+					return verr
+				}
+
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t write bucket counter to count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+
+				err = pfile.Close()
+				if err != nil {
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+					os.Exit(1)
+				}
+
+				os.Exit(1)
+
+			}
+
+		} else {
+			bucket = lastbucket
+		}
+
+	} else if keyexists != "" && overwrite {
+
+		bucket = keyexists
+
+	} else {
+
+		nb := make([]byte, 8)
+		Endian.PutUint64(nb, uint64(1))
+
+		err = db.Update(func(tx *bolt.Tx) error {
+
+			verr := errors.New("count bucket not exists")
+
+			b := tx.Bucket([]byte(cbucket))
+			if b != nil {
+				err = b.Put([]byte("counter"), []byte(nb))
+				if err != nil {
+					return err
+				}
+
+			} else {
+				return verr
+			}
+
+			return nil
+
+		})
+		if err != nil {
+
+			fmt.Printf("Can`t write bucket counter to count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+			db.Close()
+
+			err = pfile.Close()
+			if err != nil {
+				fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+				os.Exit(1)
+			}
+
+			os.Exit(1)
+
+		}
+
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(bucket))
+		if err != nil {
+			return err
+		}
+		return nil
+
+	})
+	if err != nil {
+
+		fmt.Printf("Can`t create db bucket error | Bucket [%s] | File [%s] | DB [%s] | %v\n", bucket, file, dbf, err)
+		db.Close()
+
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+			os.Exit(1)
+		}
+
+		os.Exit(1)
 
 	}
 
@@ -1431,10 +2067,18 @@ func ZAPackSingle() {
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		nb := tx.Bucket([]byte(bucket))
-		err = nb.Put([]byte(file), []byte(endbuffer.Bytes()))
-		if err != nil {
-			return err
+
+		verr := errors.New("bucket not exists")
+
+		b := tx.Bucket([]byte(bucket))
+		if b != nil {
+			err = b.Put([]byte(file), []byte(endbuffer.Bytes()))
+			if err != nil {
+				return err
+			}
+
+		} else {
+			return verr
 		}
 
 		return nil
@@ -1442,7 +2086,40 @@ func ZAPackSingle() {
 	})
 	if err != nil {
 
-		fmt.Printf("Can`t write file to db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		fmt.Printf("Can`t write file to db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		db.Close()
+
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+			os.Exit(1)
+		}
+
+		os.Exit(1)
+
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+
+		verr := errors.New("index bucket not exists")
+
+		b := tx.Bucket([]byte(ibucket))
+		if b != nil {
+			err = b.Put([]byte(file), []byte(bucket))
+			if err != nil {
+				return err
+			}
+
+		} else {
+			return verr
+		}
+
+		return nil
+
+	})
+	if err != nil {
+
+		fmt.Printf("Can`t write key to index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 		db.Close()
 
 		err = pfile.Close()
@@ -1466,9 +2143,17 @@ func ZAPackSingle() {
 		var pdata []byte
 
 		err = db.View(func(tx *bolt.Tx) error {
-			nb := tx.Bucket([]byte(bucket))
-			pdata = nb.Get([]byte(file))
-			return nil
+
+			verr := errors.New("bucket not exists")
+
+			b := tx.Bucket([]byte(bucket))
+			if b != nil {
+				pdata = b.Get([]byte(file))
+				return nil
+			} else {
+				return verr
+			}
+
 		})
 		if err != nil {
 
@@ -1529,7 +2214,7 @@ func ZAPackSingle() {
 
 		}
 
-		if keyexists {
+		if keyexists != "" {
 
 			err = db.CompactQuietly()
 			if err != nil {
@@ -1548,7 +2233,7 @@ func ZAPackSingle() {
 
 	}
 
-	if keyexists {
+	if keyexists != "" {
 
 		err = db.CompactQuietly()
 		if err != nil {
@@ -1567,8 +2252,10 @@ func ZAPackSingle() {
 
 	db.Close()
 
+	elapsed := float64(time.Since(start)) / float64(time.Millisecond)
+
 	if verbose {
-		fmt.Printf("Packing file | File [%s] | Path [%s] | DB [%s]\n", file, abs, dbf)
+		fmt.Printf("Packing file | File [%s] | Path [%s] | Bucket [%s] | Past Count [%d] | Past Bytes [%d] | Elapsed [%f] | DB [%s]\n", file, abs, bucket, keycount, keybytes, elapsed, dbf)
 	}
 
 	if delete {

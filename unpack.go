@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/eltaline/bolt"
 	"github.com/vbauerster/mpb"
@@ -130,10 +131,7 @@ func ZAUnpackList() {
 			}
 
 			if lc == partlines {
-
-				lc = 0
 				break
-
 			}
 
 			lc++
@@ -211,7 +209,9 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 	var vfilemode os.FileMode
 
-	bucket := "default"
+	bucket := ""
+	ibucket := "index"
+
 	timeout := time.Duration(locktimeout) * time.Second
 
 	rgxbolt := regexp.MustCompile(`(\.bolt$)`)
@@ -266,6 +266,8 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 		if shutdown {
 			return
 		}
+
+		start := time.Now()
 
 		uri := scanner.Text()
 
@@ -349,12 +351,20 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 		err = db.View(func(tx *bolt.Tx) error {
 
-			nb := tx.Bucket([]byte(bucket))
-			pos := nb.Cursor()
+			verr := errors.New("index bucket not exists")
 
-			for inkey, _ := pos.First(); inkey != nil; inkey, _ = pos.Next() {
-				k.key = fmt.Sprintf("%s", inkey)
-				keys = append(keys, k)
+			b := tx.Bucket([]byte(ibucket))
+			if b != nil {
+				pos := b.Cursor()
+
+				for inkey, inval := pos.First(); inkey != nil; inkey, inval = pos.Next() {
+					k.key = fmt.Sprintf("%s", inkey)
+					k.val = string(inval)
+					keys = append(keys, k)
+				}
+
+			} else {
+				return verr
 			}
 
 			return nil
@@ -362,7 +372,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 		})
 		if err != nil {
 
-			fmt.Printf("Can`t iterate all keys of files in db bucket error | DB [%s] | %v\n", dbf, err)
+			fmt.Printf("Can`t iterate all keys of files in index db bucket error | DB [%s] | %v\n", dbf, err)
 			db.Close()
 
 			if ignore {
@@ -380,6 +390,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 		for _, hkey := range keys {
 
 			rkey = hkey.key
+			bucket = hkey.val
 			dabs := fmt.Sprintf("%s/%s", dir, rkey)
 
 			if FileExists(dabs) && !overwrite {
@@ -391,9 +402,17 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			var pdata []byte
 
 			err = db.View(func(tx *bolt.Tx) error {
-				nb := tx.Bucket([]byte(bucket))
-				pdata = nb.Get([]byte(rkey))
-				return nil
+
+				verr := errors.New("bucket not exists")
+
+				b := tx.Bucket([]byte(bucket))
+				if b != nil {
+					pdata = b.Get([]byte(rkey))
+					return nil
+				} else {
+					return verr
+				}
+
 			})
 			if err != nil {
 
@@ -403,6 +422,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 					continue
 				}
 
+				db.Close()
 				return
 
 			}
@@ -422,6 +442,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 					continue
 				}
 
+				db.Close()
 				return
 
 			}
@@ -437,6 +458,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 					continue
 				}
 
+				db.Close()
 				return
 
 			}
@@ -474,6 +496,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 						continue
 					}
 
+					db.Close()
 					return
 
 				}
@@ -490,6 +513,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 						continue
 					}
 
+					db.Close()
 					return
 
 				}
@@ -503,6 +527,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 						continue
 					}
 
+					db.Close()
 					return
 
 				}
@@ -518,6 +543,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 						continue
 					}
 
+					db.Close()
 					return
 
 				}
@@ -533,6 +559,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 					continue
 				}
 
+				db.Close()
 				return
 			}
 
@@ -545,25 +572,28 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 					continue
 				}
 
+				db.Close()
 				return
 			}
 
 			loopcount++
 
+			elapsed := float64(time.Since(start)) / float64(time.Millisecond)
+
 			bar.IncrBy(1)
 
 			if verbose {
-				fmt.Printf("Unpacking file | File [%s] | Path [%s] | DB [%s]\n", rkey, dabs, dbf)
+				fmt.Printf("Unpacking file | File [%s] | Path [%s] | Elapsed [%f] | DB [%s]\n", rkey, dabs, elapsed, dbf)
 			}
 
 		}
 
 		if delete {
 
-			keycount, err := KeyCount(db, bucket)
+			keycount, err := KeyCount(db, ibucket)
 			if err != nil {
 
-				fmt.Printf("Can`t count keys of files in db bucket error | DB [%s] | %v\n", dbf, err)
+				fmt.Printf("Can`t count keys of files in index db bucket error | DB [%s] | %v\n", dbf, err)
 				db.Close()
 
 				if ignore {
@@ -636,9 +666,13 @@ func ZAUnpackSingle() {
 
 	wg.Add(1)
 
+	start := time.Now()
+
 	var vfilemode os.FileMode
 
-	bucket := "default"
+	bucket := ""
+	ibucket := "index"
+
 	timeout := time.Duration(locktimeout) * time.Second
 
 	rgxbolt := regexp.MustCompile(`(\.bolt$)`)
@@ -692,12 +726,20 @@ func ZAUnpackSingle() {
 
 	err = db.View(func(tx *bolt.Tx) error {
 
-		nb := tx.Bucket([]byte(bucket))
-		pos := nb.Cursor()
+		verr := errors.New("index bucket not exists")
 
-		for inkey, _ := pos.First(); inkey != nil; inkey, _ = pos.Next() {
-			k.key = fmt.Sprintf("%s", inkey)
-			keys = append(keys, k)
+		b := tx.Bucket([]byte(ibucket))
+		if b != nil {
+			pos := b.Cursor()
+
+			for inkey, inval := pos.First(); inkey != nil; inkey, inval = pos.Next() {
+				k.key = fmt.Sprintf("%s", inkey)
+				k.val = string(inval)
+				keys = append(keys, k)
+			}
+
+		} else {
+			return verr
 		}
 
 		return nil
@@ -705,7 +747,7 @@ func ZAUnpackSingle() {
 	})
 	if err != nil {
 
-		fmt.Printf("Can`t iterate all keys of files in db bucket error | DB [%s] | %v\n", dbf, err)
+		fmt.Printf("Can`t iterate all keys of files in index db bucket error | DB [%s] | %v\n", dbf, err)
 		db.Close()
 		os.Exit(1)
 
@@ -718,6 +760,7 @@ func ZAUnpackSingle() {
 	for _, hkey := range keys {
 
 		rkey = hkey.key
+		bucket = hkey.val
 		dabs := fmt.Sprintf("%s/%s", dir, rkey)
 
 		if FileExists(dabs) && !overwrite {
@@ -728,9 +771,17 @@ func ZAUnpackSingle() {
 		var pdata []byte
 
 		err = db.View(func(tx *bolt.Tx) error {
-			nb := tx.Bucket([]byte(bucket))
-			pdata = nb.Get([]byte(rkey))
-			return nil
+
+			verr := errors.New("bucket not exists")
+
+			b := tx.Bucket([]byte(bucket))
+			if b != nil {
+				pdata = b.Get([]byte(rkey))
+				return nil
+			} else {
+				return verr
+			}
+
 		})
 		if err != nil {
 
@@ -749,7 +800,6 @@ func ZAUnpackSingle() {
 		if err != nil {
 
 			fmt.Printf("Read header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", headbuffer, rkey, dbf, err)
-			db.Close()
 			continue
 
 		}
@@ -845,18 +895,21 @@ func ZAUnpackSingle() {
 
 		loopcount++
 
+		elapsed := float64(time.Since(start)) / float64(time.Millisecond)
+
 		if verbose {
-			fmt.Printf("Unpacking file | File [%s] | Path [%s] | DB [%s]\n", rkey, dabs, dbf)
+			fmt.Printf("Unpacking file | File [%s] | Path [%s] | Elapsed [%f] | DB [%s]\n", rkey, dabs, elapsed, dbf)
 		}
 
 	}
 
 	if delete {
 
-		keycount, err := KeyCount(db, bucket)
+		keycount, err := KeyCount(db, ibucket)
 		if err != nil {
 
-			fmt.Printf("Can`t count keys of files in db bucket error | DB [%s] | %v\n", dbf, err)
+			fmt.Printf("Can`t count keys of files in index db bucket error | DB [%s] | %v\n", dbf, err)
+			db.Close()
 			os.Exit(1)
 
 		}
@@ -867,10 +920,8 @@ func ZAUnpackSingle() {
 
 			err = RemoveFileDB(dbf)
 			if err != nil {
-
 				fmt.Printf("Can`t remove db file error | DB [%s] | %v\n", dbf, err)
 				os.Exit(1)
-
 			}
 
 			if verbose {

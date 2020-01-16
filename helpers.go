@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/eltaline/bolt"
 	"os"
@@ -149,24 +150,16 @@ func RemoveFile(file string) error {
 
 // DB Key Exists Handler
 
-func KeyExists(db *bolt.DB, bucket string, file string) (exkey bool, err error) {
-
-	exkey = false
+func KeyExists(db *bolt.DB, ibucket string, file string) (data string, err error) {
 
 	err = db.View(func(tx *bolt.Tx) error {
 
-		nb := tx.Bucket([]byte(bucket))
-		pos := nb.Cursor()
+		b := tx.Bucket([]byte(ibucket))
+		if b != nil {
 
-		skey := ""
-
-		for inkey, _ := pos.First(); inkey != nil; inkey, _ = pos.Next() {
-
-			skey = fmt.Sprintf("%s", inkey)
-
-			if skey == file {
-				exkey = true
-				break
+			val := b.Get([]byte(file))
+			if val != nil {
+				data = string(val)
 			}
 
 		}
@@ -175,13 +168,99 @@ func KeyExists(db *bolt.DB, bucket string, file string) (exkey bool, err error) 
 
 	})
 
-	return exkey, err
+	return data, err
 
 }
 
 // DB Keys Count Handler
 
-func KeyCount(db *bolt.DB, bucket string) (cnt int, err error) {
+func KeyCount(db *bolt.DB, ibucket string) (cnt int, err error) {
+
+	cnt = 1
+
+	var sts bolt.BucketStats
+
+	err = db.View(func(tx *bolt.Tx) error {
+
+		verr := errors.New("index bucket not exists")
+
+		b := tx.Bucket([]byte(ibucket))
+		if b != nil {
+			sts = b.Stats()
+			cnt = sts.KeyN
+		} else {
+			return verr
+		}
+
+		return nil
+
+	})
+
+	return cnt, err
+
+}
+
+// DB Keys Count Handler
+
+func KeyCountBucket(db *bolt.DB, bucket string) (cnt int, err error) {
+
+	cnt = 1
+
+	var sts bolt.BucketStats
+
+	err = db.View(func(tx *bolt.Tx) error {
+
+		verr := errors.New("bucket not exists")
+
+		b := tx.Bucket([]byte(bucket))
+		if b != nil {
+			sts = b.Stats()
+			cnt = sts.KeyN
+		} else {
+			return verr
+		}
+
+		return nil
+
+	})
+
+	return cnt, err
+
+}
+
+// DB Bucket Count Handler
+
+func BucketCount(db *bolt.DB, cbucket string) (cnt uint64, err error) {
+
+	cnt = uint64(0)
+
+	err = db.View(func(tx *bolt.Tx) error {
+
+		verr := errors.New("count bucket not exists")
+
+		b := tx.Bucket([]byte(cbucket))
+		if b != nil {
+
+			val := b.Get([]byte("counter"))
+			if val != nil {
+				cnt = Endian.Uint64(val)
+			}
+
+		} else {
+			return verr
+		}
+
+		return nil
+
+	})
+
+	return cnt, err
+
+}
+
+// DB Bucket Stats Handler
+
+func BucketStats(db *bolt.DB, bucket string) (cnt int, err error) {
 
 	cnt = 0
 
@@ -189,9 +268,16 @@ func KeyCount(db *bolt.DB, bucket string) (cnt int, err error) {
 
 	err = db.View(func(tx *bolt.Tx) error {
 
-		nb := tx.Bucket([]byte(bucket))
-		sts = nb.Stats()
-		cnt = sts.KeyN
+		verr := errors.New("bucket not exists")
+
+		b := tx.Bucket([]byte(bucket))
+		if b != nil {
+			sts = b.Stats()
+			cnt = sts.LeafInuse
+		} else {
+			return verr
+		}
+
 		return nil
 
 	})
