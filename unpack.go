@@ -174,13 +174,13 @@ func ZAUnpackList() {
 
 		go ZAUnpackListThread(listname, t, p, name)
 
-		time.Sleep(time.Duration(10) * time.Millisecond)
+		time.Sleep(time.Duration(250) * time.Millisecond)
 
 	}
 
 	wgthread.Wait()
 
-	time.Sleep(time.Duration(10) * time.Millisecond)
+	time.Sleep(time.Duration(100) * time.Millisecond)
 
 	for t = 1; t <= threads; t++ {
 

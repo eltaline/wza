@@ -58,6 +58,7 @@ var (
 	single                string
 	pack                  bool = false
 	unpack                bool = false
+	show                  string
 	ifilemode             string
 	bfilemode             os.FileMode
 	fmaxsize              int64 = 1048576
@@ -102,6 +103,7 @@ func init() {
 	flag.StringVar(&single, "single", single, "--single=/path/to/file - pack/unpack single regular file (with --pack) or bolt archive (with --unpack)")
 	flag.BoolVar(&pack, "pack", pack, "--pack - enables pack mode for regular files from list (with --list) or single regular file (with --single=) to bolt archives")
 	flag.BoolVar(&unpack, "unpack", unpack, "--unpack - enables unpack mode for bolt archives from list (--list=) or single bolt archive (with --single=) to regular files")
+	flag.StringVar(&show, "show", show, "--show=/path/to/bolt - show regular files/values in bolt archive")
 	flag.StringVar(&ifilemode, "bfilemode", ifilemode, "--bfilemode=0640 - (0600-0666) new bolt archive mode with uid/gid from current user/group (default 0640)")
 	flag.Int64Var(&fmaxsize, "fmaxsize", fmaxsize, "--fmaxsize=1048576 - max allowed size of regular file to write in bolt archives, otherwise skip, max value: 33554432 bytes")
 	flag.BoolVar(&overwrite, "overwrite", overwrite, "--overwrite - enables overwrite regular files or files in bolt archives when do pack/unpack")
@@ -139,8 +141,8 @@ func init() {
 		os.Exit(1)
 	}
 
-	if !pack && !unpack {
-		fmt.Printf("Can`t continue work without --pack or --unpack, use only one option | Pack [%t] | Unpack [%t]\n", pack, unpack)
+	if !pack && !unpack && show == "" {
+		fmt.Printf("Can`t continue work without --pack or --unpack -or --show, use only one option | Pack [%t] | Unpack [%t] | Show [%s]\n", pack, unpack, show)
 		os.Exit(1)
 	}
 
@@ -149,8 +151,13 @@ func init() {
 		os.Exit(1)
 	}
 
-	if list == "" && single == "" {
-		fmt.Printf("Can`t continue work without --list or --single, use only one option | List [%s] | Single [%s]\n", list, single)
+	if list == "" && single == "" && show == "" {
+		fmt.Printf("Can`t continue work without --list or --single or --show, use only one option | List [%s] | Single [%s] | Show [%s]\n", list, single, show)
+		os.Exit(1)
+	}
+
+	if show != "" && (pack || unpack || single != "" || list != "") {
+		fmt.Printf("Can`t continue work with --show and other options, for show use only show option | Show [%s]\n", show)
 		os.Exit(1)
 	}
 
@@ -190,6 +197,14 @@ func init() {
 
 	}
 
+	if show != "" {
+
+		rgxpath := regexp.MustCompile("^(/[^/\x00]*)+/?$")
+		mchrgxpath := rgxpath.MatchString(show)
+		Check(mchrgxpath, show, DoExit)
+
+	}
+
 	if list != "" && !FileExists(list) {
 		fmt.Printf("Can`t continue work with list of files not exists error | List [%s]\n", list)
 		os.Exit(1)
@@ -197,6 +212,11 @@ func init() {
 
 	if single != "" && !FileExists(single) {
 		fmt.Printf("Can`t continue work with single file not exists error | Single [%s]\n", single)
+		os.Exit(1)
+	}
+
+	if show != "" && !FileExists(show) {
+		fmt.Printf("Can`t continue work with show file not exists error | Show [%s]\n", show)
 		os.Exit(1)
 	}
 
@@ -233,46 +253,50 @@ func init() {
 	mchlocktimeout := RBInt(locktimeout, 1, 3600)
 	Check(mchlocktimeout, fmt.Sprintf("%d", locktimeout), DoExit)
 
-	switch {
-	case delete:
-		fmt.Printf("Info | Delete Mode [ENABLED]\n")
-	default:
-		fmt.Printf("Info | Delete Mode [DISABLED]\n")
-	}
+	if show == "" {
 
-	switch {
-	case ignore:
-		fmt.Printf("Info | Ignore Mode [ENABLED]\n")
-	default:
-		fmt.Printf("Info | Ignore Mode [DISABLED]\n")
-	}
+		switch {
+		case delete:
+			fmt.Printf("Info | Delete Mode [ENABLED]\n")
+		default:
+			fmt.Printf("Info | Delete Mode [DISABLED]\n")
+		}
 
-	switch {
-	case overwrite:
-		fmt.Printf("Info | Overwrite Mode [ENABLED]\n")
-	default:
-		fmt.Printf("Info | Overwrite Mode [DISABLED]\n")
-	}
+		switch {
+		case ignore:
+			fmt.Printf("Info | Ignore Mode [ENABLED]\n")
+		default:
+			fmt.Printf("Info | Ignore Mode [DISABLED]\n")
+		}
 
-	switch {
-	case disablewriteintegrity && pack:
-		fmt.Printf("Info | Write Integrity Mode [DISABLED]\n")
-	case pack:
-		fmt.Printf("Info | Write integrity Mode [ENABLED]\n")
-	}
+		switch {
+		case overwrite:
+			fmt.Printf("Info | Overwrite Mode [ENABLED]\n")
+		default:
+			fmt.Printf("Info | Overwrite Mode [DISABLED]\n")
+		}
 
-	switch {
-	case disablereadintegrity && unpack:
-		fmt.Printf("Info | Read Integrity Mode [DISABLED]\n")
-	case unpack:
-		fmt.Printf("Info | Read integrity Mode [ENABLED]\n")
-	}
+		switch {
+		case disablewriteintegrity && pack:
+			fmt.Printf("Info | Write Integrity Mode [DISABLED]\n")
+		case pack:
+			fmt.Printf("Info | Write integrity Mode [ENABLED]\n")
+		}
 
-	if pack {
-		fmt.Printf("Info | Max Allowed File Size [%d]\n", fmaxsize)
-	}
+		switch {
+		case disablereadintegrity && unpack:
+			fmt.Printf("Info | Read Integrity Mode [DISABLED]\n")
+		case unpack:
+			fmt.Printf("Info | Read integrity Mode [ENABLED]\n")
+		}
 
-	fmt.Printf("\n")
+		if pack {
+			fmt.Printf("Info | Max Allowed File Size [%d]\n", fmaxsize)
+		}
+
+		fmt.Printf("\n")
+
+	}
 
 }
 
@@ -324,6 +348,8 @@ func main() {
 		ZAPackSingle()
 	case single != "" && unpack:
 		ZAUnpackSingle()
+	case show != "":
+		ZAShowSingle()
 	}
 
 	wg.Wait()
