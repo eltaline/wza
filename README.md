@@ -140,7 +140,7 @@ Notes and Q&A
 ToDo
 ========
 
-- Recalculate and record the checksum without unpacking and packaging
+- Recalculate and record the checksum without unpacking and packing
 - Make CRC check for the contents of one archive
 
 Parameters
