@@ -36,7 +36,7 @@ Section [command line]
         --progress - enables the progress bar mode (incompatible with --verbose)
 - -single string
         --single=/path/to/file - pack or unpack one regular file (with --pack) or Bolt archive (with --unpack)
-- - show string
+- -show string
         --show=/path/to/file.bolt - shows regular files and/or values in single Bolt archive
 - -threads int
         --threads=1 - parallel mass packing or unpacking (compaction (with --overwrite), is single-threaded for security) Maximum value: 256 (default 1)
