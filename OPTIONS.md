@@ -7,48 +7,48 @@ Section [command line]
 ------------
 
 - -bfilemode string
-        --bfilemode=0640 - (0600-0666) права на bolt архивы при упаковке с uid/gid от текущего пользователя/группы (по умолчанию 0640)
+        --bfilemode=0640 - (0600-0666) permissions on Bolt archives when packing with UID and GID from the current user and group (default 0640)
 - -delete
-        --delete - включает режим удаления оригинальных регулярных файлов (с --pack) после упаковки или оригинальных bolt архивов (с --unpack) после распаковки
+        --delete - enables the deletion of the original regular files (with --pack) after packing, or the original Bolt archives (with --unpack) after unpacking
 - -disablecompaction
-        --disablecompaction - отключает отложенную компакцию bolt архивов после упаковки (с --overwrite)
+        --disablecompaction - disables the delayed compaction of Bolt archives after packing (with --overwrite)
 - -disablereadintegrity
-        --disablereadintegrity - отключает чтение контрольных сумм CRC из бинарного заголовка для регулярных файлов в bolt архивах
+        --disablereadintegrity - disables reading CRC checksums from the binary header for regular files in Bolt archives
 - -disablewriteintegrity
-        --disablewriteintegrity - отключает запись контрольных сумм CRC в бинарный заголовок для регулярных файлов в bolt архивах
+        --disablewriteintegrity - disables writing CRC checksums to the binary header for regular files in Bolt archives
 - -fmaxsize int
-        --fmaxsize=1048576 - максимально допустимый размер регулярного файла для записи в bolt архивы, в противном случае пропускает файл, максимальное значение: 33554432 байта (по умолчанию 1048576)
+        --fmaxsize=1048576 - the maximum allowed regular file size for writing to Bolt archives, otherwise it skips the file. Maximum value: 33554432 bytes (1048576 by default)
 - -help
-        --help - выводит помощь
+        --help - displays help
 - -ignore
-        --ignore - включает режим игнорирования всех ошибок при выполнении режима массовой упаковки/распаковки из списка (если потоков > 1, тогда режим игнорирования всегда включен для продолжения выполнения рабочих потоков)
+        --ignore - enables the mode for ignoring all errors when executing the mass packing or unpacking mode from the list. (If the threads are > 1, ignore mode is always enabled to continue execution of threads)
 - -ignore-not
-        --ignore-not - включает режим игнорирования только тех файлов, которые не существуют/к которым в доступе отказано, действует при работе в режиме массовой упаковки/распаковки по списку
+        --ignore-not - enables the mode for ignoring only those files that do not exist or to which access is denied. Valid when working in the mode of mass packing or unpacking according to the list
 - -list string
-        --list=/path/to/list.txt - упаковать/распаковать регулярные файлы из списка (с помощью --pack) или bolt архивы из списка (с помощью --unpack)
+        --list=/path/to/list.txt - list of files or Bolt archives for pack or unpack
 - -locktimeout int
-        locktimeout=5 - максимальный таймаут для открытия bolt архива за 1 попытку, максимальное значение: 3600 (по умолчанию 5)
+        locktimeout=5 - the maximum timeout for opening the Bolt archive in 1 attempt. Maximum value: 3600 (5 by default)
 - -overwrite
-        --overwrite - включает режим перезаписи регулярных файлов или файлов в bolt архивах при упаковке/распаковке
+        --overwrite - turns on the mode for overwriting regular files or files in Bolt archives when packing or unpacking
 - -pack
-        --pack - включает режим упаковки для регулярных файлов из списка (с --list) или одиночного регулярного файла (с --single=) в bolt архивы
+        --pack - enables the mode for packing regular files from a list (with --list=) or a single regular file (with --single=) into Bolt archives
 - -progress
-        --progress - включает режим индикатора выполнения (несовместим с --verbose)
+        --progress - enables the progress bar mode (incompatible with --verbose)
 - -single string
-        --single=/path/to/file - упаковать/распаковать один регулярный файл (с --pack) или bolt архив (с --unpack)
+        --single=/path/to/file - pack or unpack one regular file (with --pack) or Bolt archive (with --unpack)
 - - show string
-        --show=/path/to/file.bolt - показывает регулярные файлы/значения в bolt архиве
+        --show=/path/to/file.bolt - shows regular files and/or values in single Bolt archive
 - -threads int
-        --threads=1 - параллельная массовая упаковка/распаковка (компакция (с --overwrite) однопоточная, для безопасности), максимальное значение: 256 (по умолчанию 1)
+        --threads=1 - parallel mass packing or unpacking (compaction (with --overwrite), is single-threaded for security) Maximum value: 256 (default 1)
 - -tmpdir string
-        --tmpdir=/tmp/wza - временная директория для разделения списка файлов между потоками
+        --tmpdir=/tmp/wza - temporary directory for splitting a list of files between threads
 - -trytimes int
-        trytimes=5 - максимальное количество попыток взять виртуальную блокировку для bolt архива (по умолчанию sleep = 1 между попытками), максимальное значение: 1000 (по умолчанию 5)
+        trytimes=5 - the maximum number of attempts to obtain a virtual lock on the Bolt archive (default sleep = 1 between attempts), (with --pack && --list=). Maximum value: 1000 (default 5)
 - -opentries int
-        opentries=5 - максимальное количество попыток открытия bolt архива (по умолчанию sleep = 1 между попытками), максимальное значение: 1000 (по умолчанию 5)
+        opentries=5 - the maximum number of attempts to open Bolt archive (efault sleep = 1 between attempts), Maximum value: 1000 (default 5)
 - -unpack
-        --unpack - включает режим распаковки bolt архивов из списка (--list=) или одиночного bolt архива (с --single=) в регулярные файлы
+        --unpack - enables the mode for unpacking Bolt archives from the list (--list =) or a single Bolt archive (with --single =) into regular files
 - -verbose
-        --verbose - включает подробный режим (несовместим с --progress)
+        --verbose - enables verbose mode (incompatible with --progress)
 - -version
-        --version - выводит версию
+        --version - print version
