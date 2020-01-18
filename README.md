@@ -1,7 +1,6 @@
 <img src="/images/logo.png" alt="wZA Logo"/>
 
 Документация на русском: https://github.com/eltaline/wza/blob/master/README-RUS.md
-<img src="/images/logo.png" alt="wZA Logo"/>
 
 wZA is a archiver written in Go language that uses a <a href=https://github.com/eltaline/bolt>modified</a> version of the BoltDB database,
 for conversion regular files to Bolt аrchives and these unpacking. Archiver is used together with <a href=https://github.com/eltaline/wzd>wZD</a> server.
