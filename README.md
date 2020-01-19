@@ -168,7 +168,7 @@ Contacts
 - Company website: Eltaline
 
 ```
-Copyright (C) 2020 Andrey Kuvshinov
-Copyright (C) 2020 Eltaline OU
+Copyright © 2020 Andrey Kuvshinov
+Copyright © 2020 Eltaline OU
 All rights reserved.
 ```
