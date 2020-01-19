@@ -164,7 +164,7 @@ Contacts
 ========
 
 - E-mail: dev@wzd.dev
-- WZD website: https://wzd.dev
+- wZD website: https://wzd.dev
 - Company website: Eltaline
 
 ```
