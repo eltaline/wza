@@ -142,6 +142,8 @@ ToDo
 
 - Recalculate and record the checksum without unpacking and packing
 - Make CRC check for the contents of one archive
+- Add Compression (gzip, zstd, snappy)
+- Add Encryption
 
 Parameters
 ========
