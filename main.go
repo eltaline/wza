@@ -183,7 +183,7 @@ func init() {
 
 	if list != "" {
 
-		rgxpath := regexp.MustCompile("^(/[^/\x00]*)+/?$")
+		rgxpath := regexp.MustCompile("^(/?[^/\x00]*)+/?$")
 		mchrgxpath := rgxpath.MatchString(list)
 		Check(mchrgxpath, list, DoExit)
 
@@ -191,7 +191,7 @@ func init() {
 
 	if single != "" {
 
-		rgxpath := regexp.MustCompile("^(/[^/\x00]*)+/?$")
+		rgxpath := regexp.MustCompile("^(/?[^/\x00]*)+/?$")
 		mchrgxpath := rgxpath.MatchString(single)
 		Check(mchrgxpath, single, DoExit)
 
@@ -199,7 +199,7 @@ func init() {
 
 	if show != "" {
 
-		rgxpath := regexp.MustCompile("^(/[^/\x00]*)+/?$")
+		rgxpath := regexp.MustCompile("^(/?[^/\x00]*)+/?$")
 		mchrgxpath := rgxpath.MatchString(show)
 		Check(mchrgxpath, show, DoExit)
 
