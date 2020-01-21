@@ -163,7 +163,7 @@ wza --show=/path/to/file.bolt
 - Сайт компании: <a href="https://elta.ee">Eltaline</a>
 
 ```
-Copyright © 2020 Andrey Kuvshinov
-Copyright © 2020 Eltaline OU
+Copyright © 2020 Andrey Kuvshinov. Contacts: <syslinux@protonmail.com>
+Copyright © 2020 Eltaline OU. Contacts: <eltaline.ou@gmail.com>
 All rights reserved.
 ```

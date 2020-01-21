@@ -11,7 +11,7 @@ Section [command line]
 - -delete
         --delete - enables the deletion of the original regular files (with --pack) after packing, or the original Bolt archives (with --unpack) after unpacking
 - -disablecompaction
-        --disablecompaction - disables the delayed compaction of Bolt archives after packing (with --overwrite)
+        --disablecompaction - disables the delayed compaction/defragmentation of Bolt archives after packing (with --overwrite)
 - -disablereadintegrity
         --disablereadintegrity - disables reading CRC checksums from the binary header for regular files in Bolt archives
 - -disablewriteintegrity
@@ -39,7 +39,7 @@ Section [command line]
 - -show string
         --show=/path/to/file.bolt - shows regular files and/or values in single Bolt archive
 - -threads int
-        --threads=1 - parallel mass packing or unpacking (compaction (with --overwrite), is single-threaded for security) Maximum value: 256 (default 1)
+        --threads=1 - parallel mass packing or unpacking (compaction/defragmentation (with --overwrite), is single-threaded for security) Maximum value: 256 (default 1)
 - -tmpdir string
         --tmpdir=/tmp/wza - temporary directory for splitting a list of files between threads
 - -trytimes int
@@ -47,7 +47,7 @@ Section [command line]
 - -opentries int
         opentries=5 - the maximum number of attempts to open Bolt archive (efault sleep = 1 between attempts), Maximum value: 1000 (default 5)
 - -unpack
-        --unpack - enables the mode for unpacking Bolt archives from the list (--list =) or a single Bolt archive (with --single =) into regular files
+        --unpack - enables the mode for unpacking Bolt archives from the list (--list=) or a single Bolt archive (with --single=) into regular files
 - -verbose
         --verbose - enables verbose mode (incompatible with --progress)
 - -version
