@@ -159,7 +159,7 @@ func ZAPackList() {
 
 		err = scanline.Err()
 		if err != nil {
-			fmt.Printf("Read lines from list file err | List [%s] | %v\n", list, err)
+			fmt.Printf("Read lines from list file error | List [%s] | %v\n", list, err)
 			os.Exit(1)
 		}
 
@@ -1515,7 +1515,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 	err = scanner.Err()
 	if err != nil {
-		fmt.Printf("Read lines from list file err | List [%s] | %v\n", list, err)
+		fmt.Printf("Read lines from list file error | List [%s] | %v\n", list, err)
 		return
 	}
 

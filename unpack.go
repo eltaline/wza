@@ -148,7 +148,7 @@ func ZAUnpackList() {
 
 		err = scanline.Err()
 		if err != nil {
-			fmt.Printf("Read lines from list file err | List [%s] | %v\n", list, err)
+			fmt.Printf("Read lines from list file error | List [%s] | %v\n", list, err)
 			os.Exit(1)
 		}
 
@@ -653,7 +653,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 	err = scanner.Err()
 	if err != nil {
-		fmt.Printf("Read lines from list file err | List [%s] | %v\n", list, err)
+		fmt.Printf("Read lines from list file error | List [%s] | %v\n", list, err)
 		return
 	}
 
