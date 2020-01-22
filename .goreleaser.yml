@@ -92,3 +92,5 @@ changelog:
     - Image
     - Script
     - Typo
+    - "via upload"
+    - goreleaser
