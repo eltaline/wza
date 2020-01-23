@@ -417,6 +417,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			if err != nil {
 
 				fmt.Printf("Can`t get data by key from db error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
+				pdata = nil
 
 				if ignore {
 					continue
@@ -436,7 +437,9 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			hsizebuffer, err := pread.Read(headbuffer)
 			if err != nil {
 
-				fmt.Printf("Read header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", headbuffer, rkey, dbf, err)
+				fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", rkey, dbf, headbuffer, err)
+				pdata = nil
+				headbuffer = nil
 
 				if ignore {
 					continue
@@ -452,7 +455,10 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			err = binary.Read(hread, Endian, &readhead)
 			if err != nil {
 
-				fmt.Printf("Read binary header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", hread, rkey, dbf, err)
+				fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", rkey, dbf, hread, err)
+				pdata = nil
+				headbuffer = nil
+				readhead = Header{}
 
 				if ignore {
 					continue
@@ -462,6 +468,8 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 				return
 
 			}
+
+			headbuffer = nil
 
 			tmst := int64(readhead.Date)
 			modt := time.Unix(tmst, 0)
@@ -474,6 +482,8 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			default:
 				vfilemode = os.FileMode(readhead.Mode)
 			}
+
+			readhead = Header{}
 
 			endbuffer := new(bytes.Buffer)
 
@@ -491,6 +501,9 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 				if err != nil && err != io.EOF {
 
 					fmt.Printf("Can`t read tee crc data error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
+					pdata = nil
+					readbuffer.Reset()
+					rcrcdata.Reset()
 
 					if ignore {
 						continue
@@ -508,6 +521,8 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 				if crc != rcrc {
 
 					fmt.Printf("CRC read file error | File [%s] | DB [%s] | Have CRC [%v] | Awaiting CRC [%v]\n", rkey, dbf, rcrc, crc)
+					pdata = nil
+					readbuffer.Reset()
 
 					if ignore {
 						continue
@@ -522,6 +537,9 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 				if err != nil && err != io.EOF {
 
 					fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+					pdata = nil
+					readbuffer.Reset()
+					endbuffer.Reset()
 
 					if ignore {
 						continue
@@ -532,12 +550,17 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 				}
 
+				pdata = nil
+				readbuffer.Reset()
+
 			} else {
 
 				_, err = endbuffer.ReadFrom(pread)
 				if err != nil && err != io.EOF {
 
 					fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+					pdata = nil
+					endbuffer.Reset()
 
 					if ignore {
 						continue
@@ -554,6 +577,8 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			if err != nil {
 
 				fmt.Printf("Write full buffer write to file error | File [%s] | Path [%s] | %v\n", rkey, dabs, err)
+				pdata = nil
+				endbuffer.Reset()
 
 				if ignore {
 					continue
@@ -561,12 +586,15 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 				db.Close()
 				return
+
 			}
 
 			err = os.Chtimes(dabs, modt, modt)
 			if err != nil {
 
 				fmt.Printf("Can`t change time on file error | File [%s] | Path [%s] | %v\n", rkey, dabs, err)
+				pdata = nil
+				endbuffer.Reset()
 
 				if ignore {
 					continue
@@ -574,9 +602,13 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 				db.Close()
 				return
+
 			}
 
 			loopcount++
+
+			pdata = nil
+			endbuffer.Reset()
 
 			elapsed := float64(time.Since(start)) / float64(time.Millisecond)
 
@@ -786,6 +818,8 @@ func ZAUnpackSingle() {
 		if err != nil {
 
 			fmt.Printf("Can`t get data by key from db error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
+			pdata = nil
+
 			continue
 
 		}
@@ -799,7 +833,10 @@ func ZAUnpackSingle() {
 		hsizebuffer, err := pread.Read(headbuffer)
 		if err != nil {
 
-			fmt.Printf("Read header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", headbuffer, rkey, dbf, err)
+			fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", rkey, dbf, headbuffer, err)
+			pdata = nil
+			headbuffer = nil
+
 			continue
 
 		}
@@ -809,10 +846,16 @@ func ZAUnpackSingle() {
 		err = binary.Read(hread, Endian, &readhead)
 		if err != nil {
 
-			fmt.Printf("Read binary header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", hread, rkey, dbf, err)
+			fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", rkey, dbf, hread, err)
+			pdata = nil
+			headbuffer = nil
+			readhead = Header{}
+
 			continue
 
 		}
+
+		headbuffer = nil
 
 		tmst := int64(readhead.Date)
 		modt := time.Unix(tmst, 0)
@@ -825,6 +868,8 @@ func ZAUnpackSingle() {
 		default:
 			vfilemode = os.FileMode(readhead.Mode)
 		}
+
+		readhead = Header{}
 
 		endbuffer := new(bytes.Buffer)
 
@@ -842,6 +887,10 @@ func ZAUnpackSingle() {
 			if err != nil && err != io.EOF {
 
 				fmt.Printf("Can`t read tee crc data error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
+				pdata = nil
+				readbuffer.Reset()
+				rcrcdata.Reset()
+
 				continue
 
 			}
@@ -853,6 +902,8 @@ func ZAUnpackSingle() {
 			if crc != rcrc {
 
 				fmt.Printf("CRC read file error | File [%s] | DB [%s] | Have CRC [%v] | Awaiting CRC [%v]\n", rkey, dbf, rcrc, crc)
+				pdata = nil
+				readbuffer.Reset()
 				continue
 
 			}
@@ -861,9 +912,16 @@ func ZAUnpackSingle() {
 			if err != nil && err != io.EOF {
 
 				fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				pdata = nil
+				readbuffer.Reset()
+				endbuffer.Reset()
+
 				continue
 
 			}
+
+			pdata = nil
+			readbuffer.Reset()
 
 		} else {
 
@@ -871,6 +929,9 @@ func ZAUnpackSingle() {
 			if err != nil && err != io.EOF {
 
 				fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				pdata = nil
+				endbuffer.Reset()
+
 				continue
 
 			}
@@ -881,6 +942,9 @@ func ZAUnpackSingle() {
 		if err != nil {
 
 			fmt.Printf("Write full buffer write to file error | File [%s] | Path [%s] | %v\n", rkey, dabs, err)
+			pdata = nil
+			endbuffer.Reset()
+
 			continue
 
 		}
@@ -889,11 +953,17 @@ func ZAUnpackSingle() {
 		if err != nil {
 
 			fmt.Printf("Can`t change time on file error | File [%s] | Path [%s] | %v\n", rkey, dabs, err)
+			pdata = nil
+			endbuffer.Reset()
+
 			continue
 
 		}
 
 		loopcount++
+
+		pdata = nil
+		endbuffer.Reset()
 
 		elapsed := float64(time.Since(start)) / float64(time.Millisecond)
 

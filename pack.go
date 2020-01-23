@@ -257,6 +257,7 @@ func ZAPackList() {
 
 					err = os.Chmod(dbf, bfilemode)
 					if err != nil {
+
 						fmt.Printf("Can`t chmod db error | DB [%s] | %v\n", dbf, err)
 						db.Close()
 						keymutex.Unlock(dbf)
@@ -568,6 +569,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 			err = os.Chmod(dbf, bfilemode)
 			if err != nil {
+
 				fmt.Printf("Can`t chmod db error | DB [%s] | %v\n", dbf, err)
 				db.Close()
 				keymutex.Unlock(dbf)
@@ -1054,6 +1056,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				fmt.Printf("Can`t read file to rawbuffer data error | File [%s] | Path [%s] | %v\n", file, abs, err)
 				db.Close()
 				keymutex.Unlock(dbf)
+				rawbuffer.Reset()
 
 				err = pfile.Close()
 				if err != nil {
@@ -1093,6 +1096,9 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					fmt.Printf("Can`t read tee crc data error | File [%s] | Path [%s] | %v\n", file, abs, err)
 					db.Close()
 					keymutex.Unlock(dbf)
+					rawbuffer.Reset()
+					readbuffer.Reset()
+					crcdata.Reset()
 
 					err = pfile.Close()
 					if err != nil {
@@ -1117,6 +1123,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				wcrc = crc32.Checksum(crcdata.Bytes(), tbl)
 
+				crcdata.Reset()
+
 				head := Header{
 					Size: uint64(size), Date: uint32(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
 				}
@@ -1127,6 +1135,10 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					fmt.Printf("Write header data to db error | Header [%v] | File [%s] | DB [%s] | %v\n", head, file, dbf, err)
 					db.Close()
 					keymutex.Unlock(dbf)
+					rawbuffer.Reset()
+					readbuffer.Reset()
+					endbuffer.Reset()
+//					head = Header{}
 
 					err = pfile.Close()
 					if err != nil {
@@ -1148,6 +1160,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					return
 
 				}
+
+//				head = Header{}
 
 				_, err = endbuffer.ReadFrom(&readbuffer)
 				if err != nil && err != io.EOF {
@@ -1155,6 +1169,9 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 					db.Close()
 					keymutex.Unlock(dbf)
+					rawbuffer.Reset()
+					readbuffer.Reset()
+					endbuffer.Reset()
 
 					err = pfile.Close()
 					if err != nil {
@@ -1176,6 +1193,9 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					return
 
 				}
+
+				rawbuffer.Reset()
+				readbuffer.Reset()
 
 			} else {
 
@@ -1189,6 +1209,9 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					fmt.Printf("Write header data to db error | Header [%v] | File [%s] | DB [%s] | %v\n", head, file, dbf, err)
 					db.Close()
 					keymutex.Unlock(dbf)
+					rawbuffer.Reset()
+					endbuffer.Reset()
+//					head = Header{}
 
 					err = pfile.Close()
 					if err != nil {
@@ -1210,6 +1233,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					return
 
 				}
+
+//				head = Header{}
 
 				_, err = endbuffer.ReadFrom(rawbuffer)
 				if err != nil && err != io.EOF {
@@ -1217,6 +1242,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					fmt.Printf("Can`t read rawbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 					db.Close()
 					keymutex.Unlock(dbf)
+					rawbuffer.Reset()
+					endbuffer.Reset()
 
 					err = pfile.Close()
 					if err != nil {
@@ -1238,6 +1265,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					return
 
 				}
+
+				rawbuffer.Reset()
 
 			}
 
@@ -1264,6 +1293,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				fmt.Printf("Can`t write file to db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
 				keymutex.Unlock(dbf)
+				endbuffer.Reset()
 
 				err = pfile.Close()
 				if err != nil {
@@ -1309,6 +1339,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				fmt.Printf("Can`t write key to index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
 				keymutex.Unlock(dbf)
+				endbuffer.Reset()
 
 				err = pfile.Close()
 				if err != nil {
@@ -1330,6 +1361,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				return
 
 			}
+
+			endbuffer.Reset()
 
 			err = pfile.Close()
 			if err != nil {
@@ -1367,6 +1400,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					fmt.Printf("Can`t get data by key from db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 					db.Close()
 					keymutex.Unlock(dbf)
+					pdata = nil
 
 					if ignore {
 						continue
@@ -1388,6 +1422,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", file, dbf, headbuffer, err)
 					db.Close()
 					keymutex.Unlock(dbf)
+					pdata = nil
+					headbuffer = nil
 
 					if ignore {
 						continue
@@ -1405,6 +1441,9 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", file, dbf, hread, err)
 					db.Close()
 					keymutex.Unlock(dbf)
+					pdata = nil
+					headbuffer = nil
+					readhead = Header{}
 
 					if ignore {
 						continue
@@ -1413,6 +1452,9 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					return
 
 				}
+
+				headbuffer = nil
+				readhead = Header{}
 
 				rtbl := crc32.MakeTable(0xEDB88320)
 
@@ -1424,6 +1466,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					fmt.Printf("Can`t read pread data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 					db.Close()
 					keymutex.Unlock(dbf)
+					pdata = nil
+					rcrcdata.Reset()
 
 					if ignore {
 						continue
@@ -1435,6 +1479,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				rcrc = crc32.Checksum(rcrcdata.Bytes(), rtbl)
 
+				pdata = nil
 				rcrcdata.Reset()
 
 				if wcrc != rcrc {
@@ -1649,6 +1694,7 @@ func ZAPackSingle() {
 
 	err = os.Chmod(dbf, bfilemode)
 	if err != nil {
+
 		fmt.Printf("Can`t chmod db error | DB [%s] | %v\n", dbf, err)
 		db.Close()
 
@@ -1930,6 +1976,7 @@ func ZAPackSingle() {
 
 		fmt.Printf("Can`t read file to rawbuffer data error | File [%s] | Path [%s] | %v\n", file, abs, err)
 		db.Close()
+		rawbuffer.Reset()
 
 		err = pfile.Close()
 		if err != nil {
@@ -1957,6 +2004,9 @@ func ZAPackSingle() {
 
 			fmt.Printf("Can`t read tee crc data error | File [%s] | Path [%s] | %v\n", file, abs, err)
 			db.Close()
+			rawbuffer.Reset()
+			readbuffer.Reset()
+			crcdata.Reset()
 
 			err = pfile.Close()
 			if err != nil {
@@ -1970,6 +2020,8 @@ func ZAPackSingle() {
 
 		wcrc = crc32.Checksum(crcdata.Bytes(), tbl)
 
+		crcdata.Reset()
+
 		head := Header{
 			Size: uint64(size), Date: uint32(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
 		}
@@ -1979,6 +2031,10 @@ func ZAPackSingle() {
 
 			fmt.Printf("Write header data to db error | Header [%v] | File [%s] | DB [%s] | %v\n", head, file, dbf, err)
 			db.Close()
+			rawbuffer.Reset()
+			readbuffer.Reset()
+			endbuffer.Reset()
+//			head = Header{}
 
 			err = pfile.Close()
 			if err != nil {
@@ -1989,12 +2045,17 @@ func ZAPackSingle() {
 			os.Exit(1)
 
 		}
+
+//		head = Header{}
 
 		_, err = endbuffer.ReadFrom(&readbuffer)
 		if err != nil && err != io.EOF {
 
 			fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 			db.Close()
+			rawbuffer.Reset()
+			readbuffer.Reset()
+			endbuffer.Reset()
 
 			err = pfile.Close()
 			if err != nil {
@@ -2005,6 +2066,9 @@ func ZAPackSingle() {
 			os.Exit(1)
 
 		}
+
+		rawbuffer.Reset()
+		readbuffer.Reset()
 
 	} else {
 
@@ -2017,6 +2081,9 @@ func ZAPackSingle() {
 
 			fmt.Printf("Write header data to db error | Header [%v] | File [%s] | DB [%s] | %v\n", head, file, dbf, err)
 			db.Close()
+			rawbuffer.Reset()
+			endbuffer.Reset()
+//			head = Header{}
 
 			err = pfile.Close()
 			if err != nil {
@@ -2027,12 +2094,16 @@ func ZAPackSingle() {
 			os.Exit(1)
 
 		}
+
+//		head = Header{}
 
 		_, err = endbuffer.ReadFrom(rawbuffer)
 		if err != nil && err != io.EOF {
 
 			fmt.Printf("Can`t read rawbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 			db.Close()
+			rawbuffer.Reset()
+			endbuffer.Reset()
 
 			err = pfile.Close()
 			if err != nil {
@@ -2043,6 +2114,8 @@ func ZAPackSingle() {
 			os.Exit(1)
 
 		}
+
+		rawbuffer.Reset()
 
 	}
 
@@ -2068,6 +2141,7 @@ func ZAPackSingle() {
 
 		fmt.Printf("Can`t write file to db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 		db.Close()
+		endbuffer.Reset()
 
 		err = pfile.Close()
 		if err != nil {
@@ -2101,6 +2175,7 @@ func ZAPackSingle() {
 
 		fmt.Printf("Can`t write key to index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 		db.Close()
+		endbuffer.Reset()
 
 		err = pfile.Close()
 		if err != nil {
@@ -2111,6 +2186,8 @@ func ZAPackSingle() {
 		os.Exit(1)
 
 	}
+
+	endbuffer.Reset()
 
 	err = pfile.Close()
 	if err != nil {
@@ -2139,6 +2216,8 @@ func ZAPackSingle() {
 
 			fmt.Printf("Can`t get data by key from db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 			db.Close()
+			pdata = nil
+
 			os.Exit(1)
 
 		}
@@ -2152,8 +2231,11 @@ func ZAPackSingle() {
 		hsizebuffer, err := pread.Read(headbuffer)
 		if err != nil {
 
-			fmt.Printf("Read header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", headbuffer, file, dbf, err)
+			fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", file, dbf, headbuffer, err)
 			db.Close()
+			pdata = nil
+			headbuffer = nil
+
 			os.Exit(1)
 
 		}
@@ -2163,11 +2245,18 @@ func ZAPackSingle() {
 		err = binary.Read(hread, Endian, &readhead)
 		if err != nil {
 
-			fmt.Printf("Read binary header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", hread, file, dbf, err)
+			fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", file, dbf, hread, err)
 			db.Close()
+			pdata = nil
+			headbuffer = nil
+			readhead = Header{}
+
 			os.Exit(1)
 
 		}
+
+		headbuffer = nil
+		readhead = Header{}
 
 		rtbl := crc32.MakeTable(0xEDB88320)
 
@@ -2178,12 +2267,16 @@ func ZAPackSingle() {
 
 			fmt.Printf("Can`t read pread data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 			db.Close()
+			pdata = nil
+			rcrcdata.Reset()
+
 			os.Exit(1)
 
 		}
 
 		rcrc = crc32.Checksum(rcrcdata.Bytes(), rtbl)
 
+		pdata = nil
 		rcrcdata.Reset()
 
 		if wcrc != rcrc {

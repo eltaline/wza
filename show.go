@@ -131,6 +131,7 @@ func ZAShowSingle() {
 		if err != nil {
 
 			fmt.Printf("Can`t get data by key from db error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
+			pdata = nil
 			continue
 
 		}
@@ -145,6 +146,9 @@ func ZAShowSingle() {
 		if err != nil {
 
 			fmt.Printf("Read header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", headbuffer, rkey, dbf, err)
+			pdata = nil
+			headbuffer = nil
+
 			continue
 
 		}
@@ -155,9 +159,15 @@ func ZAShowSingle() {
 		if err != nil {
 
 			fmt.Printf("Read binary header data from db error | Header Buffer [%p] | File [%s] | DB [%s] | %v\n", hread, rkey, dbf, err)
+			pdata = nil
+			headbuffer = nil
+			readhead = Header{}
+
 			continue
 
 		}
+
+		headbuffer = nil
 
 		dsize := int64(readhead.Size)
 		tmst := int64(readhead.Date)
@@ -167,10 +177,14 @@ func ZAShowSingle() {
 
 		crc := readhead.Crcs
 
+		readhead = Header{}
+
 		fmt.Printf("File [%s] | Size [%d] | Date [%s] | Mode [0%s] | CRC [%d] | Bucket: [%s]\n", rkey, dsize, hmodt, mode, crc, bucket)
 
 		sum = sum + dsize
 		loopcount++
+
+		pdata = nil
 
 	}
 
