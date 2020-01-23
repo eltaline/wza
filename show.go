@@ -62,7 +62,7 @@ func ZAShowSingle() {
 		os.Exit(0)
 	}
 
-	db, err := BoltOpenRead(dbf, bfilemode, timeout, opentries)
+	db, err := BoltOpenRead(dbf, bfilemode, timeout, opentries, freelist)
 	if err != nil {
 		fmt.Printf("Can`t open db file error | DB [%s] | %v\n", dbf, err)
 		os.Exit(1)

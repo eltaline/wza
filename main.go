@@ -72,6 +72,7 @@ var (
 	disablecompaction           = false
 	tmpdir                string
 	threads               int64 = 1
+	freelist              string
 )
 
 // Interrupt Handler
@@ -115,6 +116,7 @@ func init() {
 	flag.BoolVar(&disablecompaction, "disablecompaction", disablecompaction, "--disablecompaction - disables the delayed compaction/defragmentation of Bolt archives after packing (with --overwrite)")
 	flag.StringVar(&tmpdir, "tmpdir", tmpdir, "--tmpdir=/tmp/wza - temporary directory for splitting a list of files between threads")
 	flag.Int64Var(&threads, "threads", threads, "--threads=1 - parallel mass packing or unpacking (compaction/defragmentation (with --overwrite), is single-threaded for security) Maximum value: 256")
+	flag.StringVar(&freelist, "freelist", freelist, "--freelist=hashmap - set free page list algorithm for Bolt archives, Values: hashmap or array")
 	flag.IntVar(&trytimes, "trytimes", trytimes, "trytimes=5 - the maximum number of attempts to obtain a virtual lock on the Bolt archive (default sleep = 1 between attempts), (with --pack && --list=). Maximum value: 1000")
 	flag.IntVar(&opentries, "opentries", opentries, "opentries=5 - the maximum number of attempts to open Bolt archive (efault sleep = 1 between attempts), Maximum value: 1000")
 	flag.IntVar(&locktimeout, "locktimeout", locktimeout, "locktimeout=60 - the maximum timeout for opening the Bolt archive in 1 attempt. Maximum value: 3600")
@@ -234,8 +236,8 @@ func init() {
 	if tmpdir != "" {
 
 		rgxpath := regexp.MustCompile("^(/[^/\x00]*)+/?$")
-		mchrgxpath := rgxpath.MatchString(list)
-		Check(mchrgxpath, list, DoExit)
+		mchrgxpath := rgxpath.MatchString(tmpdir)
+		Check(mchrgxpath, tmpdir, DoExit)
 
 	} else {
 		tmpdir = "/tmp/wza"
@@ -243,6 +245,16 @@ func init() {
 
 	mchthreads := RBInt64(threads, 1, 256)
 	Check(mchthreads, fmt.Sprintf("%d", threads), DoExit)
+
+	if freelist != "" {
+
+		rgxfreelist := regexp.MustCompile("^(?i)(hashmap|array)$")
+		mchrgxfreelist := rgxfreelist.MatchString(freelist)
+		Check(mchrgxfreelist, list, DoExit)
+
+	} else {
+		freelist = "hashmap"
+	}
 
 	mchtrytimes := RBInt(trytimes, 1, 1000)
 	Check(mchtrytimes, fmt.Sprintf("%d", trytimes), DoExit)

@@ -221,7 +221,7 @@ func ZAPackList() {
 
 				if key {
 
-					db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries)
+					db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries, freelist)
 					if err != nil {
 
 						fmt.Printf("Can`t open db for delayed compaction error | DB [%s] | %v\n", dbf, err)
@@ -538,7 +538,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			wcrc := uint32(0)
 			rcrc := uint32(0)
 
-			db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries)
+			db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries, freelist)
 			if err != nil {
 
 				fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
@@ -1631,7 +1631,7 @@ func ZAPackSingle() {
 	rcrc := uint32(0)
 	wcrc := uint32(0)
 
-	db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries)
+	db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries, freelist)
 	if err != nil {
 
 		fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
