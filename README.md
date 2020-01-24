@@ -12,7 +12,7 @@ Current stable version: 1.1.0
 
 Fixed in version 1.1.0:
 
-- Fix Memory Buffers
+- Fix memory buffers
 - Fix some regular expressions
 
 Features
