@@ -10,6 +10,10 @@ for conversion regular files to Bolt аrchives and these unpacking. Archiver is 
 Current stable version: 1.1.0
 ========
 
+Added in version 1.1.0:
+
+- Choice of free page algorithm in BoltDB (freelist parameter)
+
 Fixed in version 1.1.0:
 
 - Fix memory buffers
