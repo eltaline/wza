@@ -18,6 +18,8 @@ Section [command line]
         --disablewriteintegrity - disables writing CRC checksums to the binary header for regular files in Bolt archives
 - -fmaxsize int
         --fmaxsize=1048576 - the maximum allowed regular file size for writing to Bolt archives, otherwise it skips the file. Maximum value: 33554432 bytes (1048576 by default)
+- -freelist string
+        --freelist=hashmap - set free page list algorithm for Bolt archives, values: hashmap or array (default hashmap)
 - -help
         --help - displays help
 - -ignore
