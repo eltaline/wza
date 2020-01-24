@@ -7,8 +7,13 @@ for conversion regular files to Bolt аrchives and these unpacking. Archiver is 
 
 <img src="/images/wzd-scheme.png" alt="wZD Scheme"/>
 
-Current stable version: 1.0.0
+Current stable version: 1.1.0
 ========
+
+Fixed in version 1.1.0:
+
+- Fix Memory Buffers
+- Fix some regular expressions
 
 Features
 ========
