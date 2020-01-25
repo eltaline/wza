@@ -30,7 +30,7 @@ Features
 Incompatibilities
 ========
 
-- Recalculation and recording of the checksum without unpacking and packaging operations is not yet supported
+- Recalculation and recording of the checksum without unpacking and packing operations is not yet supported
 - Data disks cannot simply be transferred from the Little Endian system to the Big Endian system, or vice versa
 
 Requirements
