@@ -323,6 +323,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 	timeout := time.Duration(locktimeout) * time.Second
 
 	rgxbolt := regexp.MustCompile(`(\.bolt$)`)
+	rgxcrcbolt := regexp.MustCompile(`(\.crcbolt$)`)
 
 	lfile, err := os.OpenFile(listname, os.O_RDONLY, os.ModePerm)
 	if err != nil {
@@ -404,8 +405,9 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 		}
 
 		mchregbolt := rgxbolt.MatchString(file)
+		mchregcrcbolt := rgxcrcbolt.MatchString(file)
 
-		if mchregbolt {
+		if mchregbolt || mchregcrcbolt {
 
 			if !progress {
 				fmt.Printf("Skipping bolt add to bolt | File [%s] | Path [%s]\n", file, abs)
@@ -1138,7 +1140,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					rawbuffer.Reset()
 					readbuffer.Reset()
 					endbuffer.Reset()
-//					head = Header{}
+					//					head = Header{}
 
 					err = pfile.Close()
 					if err != nil {
@@ -1161,7 +1163,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				}
 
-//				head = Header{}
+				//				head = Header{}
 
 				_, err = endbuffer.ReadFrom(&readbuffer)
 				if err != nil && err != io.EOF {
@@ -1211,7 +1213,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 					keymutex.Unlock(dbf)
 					rawbuffer.Reset()
 					endbuffer.Reset()
-//					head = Header{}
+					//					head = Header{}
 
 					err = pfile.Close()
 					if err != nil {
@@ -1234,7 +1236,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				}
 
-//				head = Header{}
+				//				head = Header{}
 
 				_, err = endbuffer.ReadFrom(rawbuffer)
 				if err != nil && err != io.EOF {
@@ -1597,6 +1599,7 @@ func ZAPackSingle() {
 	timeout := time.Duration(locktimeout) * time.Second
 
 	rgxbolt := regexp.MustCompile(`(\.bolt$)`)
+	rgxcrcbolt := regexp.MustCompile(`(\.crcbolt$)`)
 
 	if DirExists(abs) {
 		fmt.Printf("Skipping directory add to bolt | Directory [%s]\n", abs)
@@ -1604,8 +1607,9 @@ func ZAPackSingle() {
 	}
 
 	mchregbolt := rgxbolt.MatchString(file)
+	mchregcrcbolt := rgxcrcbolt.MatchString(file)
 
-	if mchregbolt {
+	if mchregbolt || mchregcrcbolt {
 		fmt.Printf("Skipping bolt add to bolt | File [%s] | Path [%s]\n", file, abs)
 		os.Exit(0)
 	}
@@ -2034,7 +2038,7 @@ func ZAPackSingle() {
 			rawbuffer.Reset()
 			readbuffer.Reset()
 			endbuffer.Reset()
-//			head = Header{}
+			//			head = Header{}
 
 			err = pfile.Close()
 			if err != nil {
@@ -2046,7 +2050,7 @@ func ZAPackSingle() {
 
 		}
 
-//		head = Header{}
+		//		head = Header{}
 
 		_, err = endbuffer.ReadFrom(&readbuffer)
 		if err != nil && err != io.EOF {
@@ -2083,7 +2087,7 @@ func ZAPackSingle() {
 			db.Close()
 			rawbuffer.Reset()
 			endbuffer.Reset()
-//			head = Header{}
+			//			head = Header{}
 
 			err = pfile.Close()
 			if err != nil {
@@ -2095,7 +2099,7 @@ func ZAPackSingle() {
 
 		}
 
-//		head = Header{}
+		//		head = Header{}
 
 		_, err = endbuffer.ReadFrom(rawbuffer)
 		if err != nil && err != io.EOF {
