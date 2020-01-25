@@ -73,6 +73,8 @@ Install packages or binaries
 
 - <a href=https://github.com/eltaline/wza/releases>Download</a>
 
+**Files are packed and unpacked in the same directory where they were located, and not in the current directory where wZA starts**
+
 View Bolt archive content
 ------------
 
@@ -103,6 +105,12 @@ wza --pack --list=/tmp/pack.list
 ```
 
 Unpacking all files from the list of Bolt archives
+--------
+
+```bash
+find /var/storage -type f -name '*.bolt' > /tmp/unpack.list
+wza --unpack --list=/tmp/unpack.list
+```
 
 Data migration in 3 steps without stopping the service
 ------------
