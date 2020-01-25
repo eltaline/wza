@@ -206,7 +206,7 @@ Contacts
 
 - E-mail: dev@wzd.dev
 - wZD website: https://wzd.dev
-- Company website: Eltaline
+- Company website: <a href="https://elta.ee">Eltaline</a>
 
 ```
 Copyright © 2020 Andrey Kuvshinov. Contacts: <syslinux@protonmail.com>
