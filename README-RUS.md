@@ -94,14 +94,14 @@ wza --show=/path/to/file.bolt
 wza --pack --single=/path/to/file.ext
 ```
 
-Распаковка одиночного файла из Bolt архива
+Распаковка всех файлов из одиночного Bolt архива
 --------
 
 ```bash
 wza --unpack --single=/path/to/file.bolt
 ```
 
-Упаковка файлов по списку в Bolt архивы
+Упаковка всех файлов по списку в Bolt архивы
 --------
 
 ```bash
@@ -109,7 +109,7 @@ find /var/storage -type f -not -name '*.bolt' > /tmp/pack.list
 wza --pack --list=/tmp/pack.list
 ```
 
-Распаковка файлов по списку из Bolt архивов
+Распаковка всех файлов из списка Bolt архивов
 --------
 
 ```bash
