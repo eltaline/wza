@@ -82,7 +82,7 @@ View Bolt archive content
 wza --show=/path/to/file.bolt
 ```
 
-Packing a single file in the Bolt archive
+Packing a single file to the Bolt archive
 --------
 
 ```bash
@@ -96,7 +96,7 @@ Unpacking all files from a single Bolt archive
 wza --unpack --single=/path/to/file.bolt
 ```
 
-Packing all files according to the list in Bolt archives
+Packing all files to Bolt archives, according to the list of files
 --------
 
 ```bash
