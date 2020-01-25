@@ -80,6 +80,30 @@ View Bolt archive content
 wza --show=/path/to/file.bolt
 ```
 
+Packing a single file in the Bolt archive
+--------
+
+```bash
+wza --pack --single=/path/to/file.ext
+```
+
+Unpacking all files from a single Bolt archive
+--------
+
+```bash
+wza --unpack --single=/path/to/file.bolt
+```
+
+Packing all files according to the list in Bolt archives
+--------
+
+```bash
+find /var/storage -type f -not -name '*.bolt' > /tmp/pack.list
+wza --pack --list=/tmp/pack.list
+```
+
+Unpacking all files from the list of Bolt archives
+
 Data migration in 3 steps without stopping the service
 ------------
 
