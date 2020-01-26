@@ -200,7 +200,7 @@ wza --unpack --list=/tmp/unpack.list
 ========
 
 - E-Mail: dev@wzd.dev
-- Cайт wZD: https://wzd.dev
+- Сайт wZD: https://wzd.dev
 - Сайт компании: <a href="https://elta.ee">Eltaline</a>
 
 ```

@@ -93,7 +93,7 @@ func ZAPackList() {
 			fmt.Printf("Can`t create part list file error | List [%s] | File [%s] | %v\n", list, listname, err)
 			os.Exit(1)
 		}
-		defer fdlist.Close()
+		// No need to defer in loop
 
 		err = os.Chmod(listname, 0666)
 		if err != nil {
@@ -183,7 +183,7 @@ func ZAPackList() {
 
 		wgthread.Add(1)
 
-		go ZAPackListThread(keymutex, mcmp, listname, t, p, name)
+		go ZAPackListThread(keymutex, mcmp, listname, p, name)
 
 		time.Sleep(time.Duration(250) * time.Millisecond)
 
@@ -234,7 +234,7 @@ func ZAPackList() {
 						return
 
 					}
-					defer db.Close()
+					// No need to defer in loop
 
 					err = db.CompactQuietly()
 					if err != nil {
@@ -311,7 +311,7 @@ func ZAPackList() {
 
 }
 
-func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname string, t int64, p *mpb.Progress, name string) {
+func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname string, p *mpb.Progress, name string) {
 	defer wgthread.Done()
 
 	var vfilemode uint64
@@ -536,7 +536,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				return
 
 			}
-			defer pfile.Close()
+			// No need to defer in loop
 
 			wcrc := uint32(0)
 			rcrc := uint32(0)
@@ -567,7 +567,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				return
 
 			}
-			defer db.Close()
+			// No need to defer in loop
 
 			err = os.Chmod(dbf, bfilemode)
 			if err != nil {
@@ -662,7 +662,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 			if keyexists != "" && !overwrite {
 
-				if delete {
+				if fdelete {
 
 					db.Close()
 					keymutex.Unlock(dbf)
@@ -859,7 +859,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 						b := tx.Bucket([]byte(cbucket))
 						if b != nil {
-							err = b.Put([]byte("counter"), []byte(nb))
+							err = b.Put([]byte("counter"), nb)
 							if err != nil {
 								return err
 							}
@@ -973,7 +973,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					b := tx.Bucket([]byte(cbucket))
 					if b != nil {
-						err = b.Put([]byte("counter"), []byte(nb))
+						err = b.Put([]byte("counter"), nb)
 						if err != nil {
 							return err
 						}
@@ -1278,7 +1278,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				b := tx.Bucket([]byte(bucket))
 				if b != nil {
-					err = b.Put([]byte(file), []byte(endbuffer.Bytes()))
+					err = b.Put([]byte(file), endbuffer.Bytes())
 					if err != nil {
 						return err
 					}
@@ -1530,7 +1530,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			fmt.Printf("Packing file | File [%s] | Path [%s] | Bucket [%s] | Past Count [%d] | Past Bytes [%d] | Elapsed [%f] | DB [%s]\n", file, abs, bucket, keycount, keybytes, elapsed, dbf)
 		}
 
-		if delete {
+		if fdelete {
 
 			err = RemoveFile(abs)
 			if err != nil {
@@ -1753,7 +1753,7 @@ func ZAPackSingle() {
 
 	if keyexists != "" && !overwrite {
 
-		if delete {
+		if fdelete {
 
 			db.Close()
 			err = pfile.Close()
@@ -1875,7 +1875,7 @@ func ZAPackSingle() {
 
 				b := tx.Bucket([]byte(cbucket))
 				if b != nil {
-					err = b.Put([]byte("counter"), []byte(nb))
+					err = b.Put([]byte("counter"), nb)
 					if err != nil {
 						return err
 					}
@@ -1921,7 +1921,7 @@ func ZAPackSingle() {
 
 			b := tx.Bucket([]byte(cbucket))
 			if b != nil {
-				err = b.Put([]byte("counter"), []byte(nb))
+				err = b.Put([]byte("counter"), nb)
 				if err != nil {
 					return err
 				}
@@ -2129,7 +2129,7 @@ func ZAPackSingle() {
 
 		b := tx.Bucket([]byte(bucket))
 		if b != nil {
-			err = b.Put([]byte(file), []byte(endbuffer.Bytes()))
+			err = b.Put([]byte(file), endbuffer.Bytes())
 			if err != nil {
 				return err
 			}
@@ -2335,7 +2335,7 @@ func ZAPackSingle() {
 		fmt.Printf("Packing file | File [%s] | Path [%s] | Bucket [%s] | Past Count [%d] | Past Bytes [%d] | Elapsed [%f] | DB [%s]\n", file, abs, bucket, keycount, keybytes, elapsed, dbf)
 	}
 
-	if delete {
+	if fdelete {
 
 		err = RemoveFile(abs)
 		if err != nil {

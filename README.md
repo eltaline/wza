@@ -22,7 +22,7 @@ Fixed in version 1.1.0:
 Features
 ========
 
-- Multithreading
+- Multi threading
 - Archiving files up to 32MB in size
 - Supports CRC data integrity when writing or reading
 - Mixed mode support. Large files will be excluded from archiving in Bolt archives
@@ -48,7 +48,7 @@ Our cluster used has about 250,000,000 small pictures and 15,000,000 directories
 
 With a fragmented directory structure, an average of 10 to 1000 files are stored in most directories. After installing wZD and archiving the files in Bolt archives, it turned out about 25 times less files, about 10,000,000. With proper planning of the structure, a smaller number of files could have been achieved, but this is not possible if the already existing structure remains unchanged. Proper planning would result in very large inodes savings, low memory consumption of the cluster FS, significant acceleration of the MooseFS operation itself, and a reduction in the actual space occupied on the MooseFS cluster FS. The fact is, MooseFS always allocates a block of 64KB for each file, that is, even if a file has a size of 3KB, will still be allocated 64KB.
 
-The multithreaded wZA archiver has already been tested on real data.
+The multi threaded wZA archiver has already been tested on real data.
 
 Our cluster used (10 servers) is an Origin server installed behind a CDN network and served by only 2 wZD servers.
 
@@ -159,8 +159,8 @@ same is true when unpacking.
 
 Restarting archiving without the --overwrite option will not overwrite files in Bolt archives. The same is true when unpacking.
 
-The archiver also supports the multithreaded version --threads= and also other options.
-In the multithreaded version, the --ignore option is automatically applied so as not to stop running threads when any errors occur. In case of an error with the -
+The archiver also supports the multi threaded version --threads= and also other options.
+In the multi threaded version, the --ignore option is automatically applied so as not to stop running threads when any errors occur. In case of an error with the -
 -delete option turned on, the source file will not be deleted.
 
 A full description of all product parameters is available here: <a href="/OPTIONS.md">Options</a>

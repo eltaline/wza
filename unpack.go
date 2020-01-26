@@ -82,7 +82,7 @@ func ZAUnpackList() {
 			fmt.Printf("Can`t create part list file error | List [%s] | File [%s] | %v\n", list, listname, err)
 			os.Exit(1)
 		}
-		defer fdlist.Close()
+		// No need to defer in loop
 
 		err = os.Chmod(listname, 0666)
 		if err != nil {
@@ -172,7 +172,7 @@ func ZAUnpackList() {
 
 		wgthread.Add(1)
 
-		go ZAUnpackListThread(listname, t, p, name)
+		go ZAUnpackListThread(listname, p, name)
 
 		time.Sleep(time.Duration(250) * time.Millisecond)
 
@@ -202,7 +202,7 @@ func ZAUnpackList() {
 
 }
 
-func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) {
+func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 	defer wgthread.Done()
 
 	// Wait Group
@@ -344,7 +344,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			return
 
 		}
-		defer db.Close()
+		// No need to defer in loop
 
 		var keys []KeysIter
 		var k KeysIter
@@ -477,7 +477,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 			crc := readhead.Crcs
 
 			switch {
-			case err != nil || readhead.Mode == 0:
+			case readhead.Mode == 0:
 				vfilemode = os.FileMode(0640)
 			default:
 				vfilemode = os.FileMode(readhead.Mode)
@@ -620,7 +620,7 @@ func ZAUnpackListThread(listname string, t int64, p *mpb.Progress, name string) 
 
 		}
 
-		if delete {
+		if fdelete {
 
 			keycount, err := KeyCount(db, ibucket)
 			if err != nil {
@@ -863,7 +863,7 @@ func ZAUnpackSingle() {
 		crc := readhead.Crcs
 
 		switch {
-		case err != nil || readhead.Mode == 0:
+		case readhead.Mode == 0:
 			vfilemode = os.FileMode(0640)
 		default:
 			vfilemode = os.FileMode(readhead.Mode)
@@ -973,7 +973,7 @@ func ZAUnpackSingle() {
 
 	}
 
-	if delete {
+	if fdelete {
 
 		keycount, err := KeyCount(db, ibucket)
 		if err != nil {

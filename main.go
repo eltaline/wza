@@ -66,7 +66,7 @@ var (
 	overwrite             bool  = false
 	ignore                bool  = false
 	ignorenot             bool  = false
-	delete                bool  = false
+	fdelete               bool  = false
 	disablereadintegrity        = false
 	disablewriteintegrity       = false
 	disablecompaction           = false
@@ -110,7 +110,7 @@ func init() {
 	flag.BoolVar(&overwrite, "overwrite", overwrite, "--overwrite - turns on the mode for overwriting regular files or files in Bolt archives when packing or unpacking")
 	flag.BoolVar(&ignore, "ignore", ignore, "--ignore - enables the mode for ignoring all errors when executing the mass packing or unpacking mode from the list. (If the threads are > 1, ignore mode is always enabled to continue execution of threads)")
 	flag.BoolVar(&ignorenot, "ignore-not", ignorenot, "--ignore-not - enables the mode for ignoring only those files that do not exist or to which access is denied. Valid when working in the mode of mass packing or unpacking according to the list")
-	flag.BoolVar(&delete, "delete", delete, "--delete - enables the deletion of the original regular files (with --pack) after packing, or the original Bolt archives (with --unpack) after unpacking")
+	flag.BoolVar(&fdelete, "delete", fdelete, "--delete - enables the deletion of the original regular files (with --pack) after packing, or the original Bolt archives (with --unpack) after unpacking")
 	flag.BoolVar(&disablereadintegrity, "disablereadintegrity", disablereadintegrity, "--disablereadintegrity - disables reading CRC checksums from the binary header for regular files in Bolt archives")
 	flag.BoolVar(&disablewriteintegrity, "disablewriteintegrity", disablewriteintegrity, "--disablewriteintegrity - disables writing CRC checksums to the binary header for regular files in Bolt archives")
 	flag.BoolVar(&disablecompaction, "disablecompaction", disablecompaction, "--disablecompaction - disables the delayed compaction/defragmentation of Bolt archives after packing (with --overwrite)")
@@ -268,7 +268,7 @@ func init() {
 	if show == "" {
 
 		switch {
-		case delete:
+		case fdelete:
 			fmt.Printf("Info | Delete Mode [ENABLED]\n")
 		default:
 			fmt.Printf("Info | Delete Mode [DISABLED]\n")
