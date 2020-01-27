@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-// ZAPackList: packing all files to bolt archives, according to the list of files
+// ZAPackList : packing all files to bolt archives, according to the list of files
 func ZAPackList() {
 	defer wg.Done()
 
@@ -312,7 +312,7 @@ func ZAPackList() {
 
 }
 
-// ZAPackListThread: from ZAPackList: packing all files to bolt archives, according to the threaded lists of files
+// ZAPackListThread : from ZAPackList: packing all files to bolt archives, according to the threaded lists of files
 func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname string, p *mpb.Progress, name string) {
 	defer wgthread.Done()
 
@@ -1604,7 +1604,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 }
 
-// ZAPackSingle: packing single file to bolt archive
+// ZAPackSingle : packing single file to bolt archive
 func ZAPackSingle() {
 	defer wg.Done()
 
