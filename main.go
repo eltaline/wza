@@ -72,9 +72,9 @@ var (
 	ignore                bool  = false
 	ignorenot             bool  = false
 	fdelete               bool  = false
-	disablereadintegrity        = false
-	disablewriteintegrity       = false
-	disablecompaction           = false
+	disablereadintegrity  bool  = false
+	disablewriteintegrity bool  = false
+	disablecompaction     bool  = false
 	tmpdir                string
 	threads               int64 = 1
 	freelist              string
