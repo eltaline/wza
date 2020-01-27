@@ -410,7 +410,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			if pwd == "/" {
 
 				if !progress {
-					fmt.Printf("Can`t add a file to bolt archive in root/chroot filesystem directory restricted error | File [%s] | Path [%s] | %v\n", file, pwd, err)
+					fmt.Printf("Can`t add a file to bolt archive in root/chroot filesystem directory restricted error | File [%s] | Path [%s]\n", file, pwd)
 				}
 
 				if ignore {
