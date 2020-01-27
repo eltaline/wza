@@ -15,6 +15,7 @@ import (
 
 // Global Configuration
 
+// Header: type contains binary header fields
 type Header struct {
 	Size uint64
 	Date uint32
@@ -27,6 +28,7 @@ type Header struct {
 	Rsvr uint64
 }
 
+// KeysIter: type contains results of iteration through key and value pairs
 type KeysIter struct {
 	key string
 	val string
@@ -35,9 +37,12 @@ type KeysIter struct {
 // Global Variables
 
 var (
+	// Endian global variable
 	Endian binary.ByteOrder
 
+	// System user UID
 	Uid int64
+	// System user GID
 	Gid int64
 
 	wg       sync.WaitGroup
@@ -75,8 +80,7 @@ var (
 	freelist              string
 )
 
-// Interrupt Handler
-
+// Interrupt: custom interrupt handler
 func Interrupt() {
 	channel := make(chan os.Signal, 2)
 	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)

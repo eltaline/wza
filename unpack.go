@@ -18,6 +18,7 @@ import (
 	"time"
 )
 
+// ZAUnpackList: unpacking all files from the list of bolt archives
 func ZAUnpackList() {
 	defer wg.Done()
 
@@ -202,6 +203,7 @@ func ZAUnpackList() {
 
 }
 
+// ZAUnpackListThread: from ZAUnpackList: unpacking all files from the threaded lists of bolt archives
 func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 	defer wgthread.Done()
 
@@ -691,6 +693,7 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 
 }
 
+// ZAUnpackSingle: unpacking all files from single bolt archive
 func ZAUnpackSingle() {
 	defer wg.Done()
 

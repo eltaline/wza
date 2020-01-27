@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// ZAShowSingle: show contents from single bolt archive
 func ZAShowSingle() {
 	defer wg.Done()
 

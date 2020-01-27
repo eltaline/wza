@@ -12,8 +12,9 @@ import (
 	"unsafe"
 )
 
-// Bolt Open Handlers
+// BoltDB Handlers
 
+// BoltOpenWrite: open BoltDB for write operations
 func BoltOpenWrite(dbpath string, fmode os.FileMode, timeout time.Duration, opentries int, freelist string) (*bolt.DB, error) {
 
 	i := 0
@@ -46,6 +47,7 @@ func BoltOpenWrite(dbpath string, fmode os.FileMode, timeout time.Duration, open
 
 }
 
+// BoltOpenRead: open BoltDB for readonly operations
 func BoltOpenRead(dbpath string, fmode os.FileMode, timeout time.Duration, opentries int, freelist string) (*bolt.DB, error) {
 
 	i := 0
@@ -78,8 +80,9 @@ func BoltOpenRead(dbpath string, fmode os.FileMode, timeout time.Duration, opent
 
 }
 
-// Determine Endianess Handler
+// System Helpers
 
+// DetectEndian: determine system endianess function
 func DetectEndian() {
 
 	buf := [2]byte{}
@@ -97,8 +100,7 @@ func DetectEndian() {
 
 }
 
-// Detect Daemon User/Group Handler
-
+// DetectUser: determine current system user and group
 func DetectUser() {
 
 	cuser, err := user.Current()
@@ -121,8 +123,9 @@ func DetectUser() {
 
 }
 
-// File Exists Handler
+// File Helpers
 
+// FileExists: check existence of requested file
 func FileExists(filename string) bool {
 
 	if fi, err := os.Stat(filename); err == nil {
@@ -137,8 +140,7 @@ func FileExists(filename string) bool {
 
 }
 
-// Dir Exists Handler
-
+// DirExists: check existence of requested directory
 func DirExists(filename string) bool {
 
 	if fi, err := os.Stat(filename); err == nil {
@@ -153,8 +155,7 @@ func DirExists(filename string) bool {
 
 }
 
-// Remove File Handler
-
+// RemoveFile: remove requested file
 func RemoveFile(file string) error {
 
 	err := os.Remove(file)
@@ -166,8 +167,9 @@ func RemoveFile(file string) error {
 
 }
 
-// DB Key Exists Handler
+// DB Helpers
 
+// KeyExists: check existence of requested key
 func KeyExists(db *bolt.DB, ibucket string, file string) (data string, err error) {
 
 	err = db.View(func(tx *bolt.Tx) error {
@@ -190,8 +192,7 @@ func KeyExists(db *bolt.DB, ibucket string, file string) (data string, err error
 
 }
 
-// DB Keys Count Handler
-
+// KeyCount: count keys in an index bucket for requested directory
 func KeyCount(db *bolt.DB, ibucket string) (cnt int, err error) {
 
 	cnt = 1
@@ -218,8 +219,7 @@ func KeyCount(db *bolt.DB, ibucket string) (cnt int, err error) {
 
 }
 
-// DB Keys Count Handler
-
+// KeyCountBucket: count keys in a requested bucket
 func KeyCountBucket(db *bolt.DB, bucket string) (cnt int, err error) {
 
 	cnt = 1
@@ -246,8 +246,7 @@ func KeyCountBucket(db *bolt.DB, bucket string) (cnt int, err error) {
 
 }
 
-// DB Bucket Count Handler
-
+// BucketCount: get count of buckets from count bucket in requested directory
 func BucketCount(db *bolt.DB, cbucket string) (cnt uint64, err error) {
 
 	cnt = uint64(0)
@@ -276,8 +275,7 @@ func BucketCount(db *bolt.DB, cbucket string) (cnt uint64, err error) {
 
 }
 
-// DB Bucket Stats Handler
-
+// BucketStats: get current size of requested bucket
 func BucketStats(db *bolt.DB, bucket string) (cnt int, err error) {
 
 	cnt = 0
@@ -304,8 +302,7 @@ func BucketStats(db *bolt.DB, bucket string) (cnt int, err error) {
 
 }
 
-// DB Remove File Handler
-
+// RemoveFileDB: remove requested BoltDB file
 func RemoveFileDB(file string) error {
 
 	err := os.Remove(file)
@@ -317,8 +314,9 @@ func RemoveFileDB(file string) error {
 
 }
 
-// Check Options With Boolean Functions
+// Check Options With Boolean/Int Functions
 
+// Check: if received value is false, then run DoExit function
 func Check(bvar bool, val string, ferr func(string)) {
 
 	if !bvar {
@@ -327,6 +325,7 @@ func Check(bvar bool, val string, ferr func(string)) {
 
 }
 
+// DoExit: exit program function
 func DoExit(val string) {
 
 	fmt.Printf("Bad option value error | Value [%v]\n", val)
@@ -334,6 +333,7 @@ func DoExit(val string) {
 
 }
 
+// RBInt: check int32 acceptable range function and then return true or false
 func RBInt(i int, min int, max int) bool {
 
 	switch {
@@ -345,6 +345,7 @@ func RBInt(i int, min int, max int) bool {
 
 }
 
+// RBInt64: check int64 acceptable range function and return true or false
 func RBInt64(i int64, min int64, max int64) bool {
 
 	switch {
