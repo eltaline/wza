@@ -391,7 +391,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 		dir := filepath.Dir(uri)
 		file := filepath.Base(uri)
 
-		if dir == "" || dir == "/" {
+		if dir == "." || dir == "/" {
 			pwd, err := os.Getwd()
 			if err != nil {
 
@@ -1624,7 +1624,7 @@ func ZAPackSingle() {
 	dir := filepath.Dir(uri)
 	file := filepath.Base(uri)
 
-	if dir == "" || dir == "/" {
+	if dir == "." || dir == "/" {
 		pwd, err := os.Getwd()
 		if err != nil {
 			fmt.Printf("Can`t get current directory error | File [%s] | Path [%s] | %v\n", file, pwd, err)
