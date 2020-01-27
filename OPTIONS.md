@@ -27,13 +27,13 @@ Section [command line]
 - -ignore-not
         --ignore-not - enables the mode for ignoring only those files that do not exist or to which access is denied. Valid when working in the mode of mass packing or unpacking according to the list
 - -list string
-        --list=/path/to/list.txt - list of files or Bolt archives for pack or unpack
+        --list=/path/to/list.txt - list of files or Bolt archives for packing or unpacking
 - -locktimeout int
         locktimeout=5 - the maximum timeout for opening the Bolt archive in 1 attempt. Maximum value: 3600 (5 by default)
 - -overwrite
         --overwrite - turns on the mode for overwriting regular files or files in Bolt archives when packing or unpacking
 - -pack
-        --pack - enables the mode for packing regular files from a list (with --list=) or a single regular file (with --single=) into Bolt archives
+        --pack - enables the mode for packing regular files from a list (with --list=), or a single regular file (with --single=) into Bolt archives
 - -progress
         --progress - enables the progress bar mode (incompatible with --verbose)
 - -single string
@@ -49,7 +49,7 @@ Section [command line]
 - -opentries int
         opentries=5 - the maximum number of attempts to open Bolt archive (efault sleep = 1 between attempts), Maximum value: 1000 (default 5)
 - -unpack
-        --unpack - enables the mode for unpacking Bolt archives from the list (--list=) or a single Bolt archive (with --single=) into regular files
+        --unpack - enables the mode for unpacking Bolt archives from the list (--list=), or a single Bolt archive (with --single=) into regular files
 - -verbose
         --verbose - enables verbose mode (incompatible with --progress)
 - -version

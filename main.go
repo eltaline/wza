@@ -100,10 +100,10 @@ func init() {
 
 	// Command Line Options
 
-	flag.StringVar(&list, "list", list, "--list=/path/to/list.txt - list of files or Bolt archives for pack or unpack")
+	flag.StringVar(&list, "list", list, "--list=/path/to/list.txt - list of files or Bolt archives for packing or unpacking")
 	flag.StringVar(&single, "single", single, "--single=/path/to/file - pack or unpack one regular file (with --pack) or Bolt archive (with --unpack)")
-	flag.BoolVar(&pack, "pack", pack, "--pack - enables the mode for packing regular files from a list (with --list=) or a single regular file (with --single=) into Bolt archives")
-	flag.BoolVar(&unpack, "unpack", unpack, "--unpack - enables the mode for unpacking Bolt archives from the list (--list=) or a single Bolt archive (with --single=) into regular files")
+	flag.BoolVar(&pack, "pack", pack, "--pack - enables the mode for packing regular files from a list (with --list=), or a single regular file (with --single=) into Bolt archives")
+	flag.BoolVar(&unpack, "unpack", unpack, "--unpack - enables the mode for unpacking Bolt archives from the list (--list=), or a single Bolt archive (with --single=) into regular files")
 	flag.StringVar(&show, "show", show, "--show=/path/to/file.bolt - shows regular files and/or values in single Bolt archive")
 	flag.StringVar(&ifilemode, "bfilemode", ifilemode, "--bfilemode=0640 - (0600-0666) permissions on Bolt archives when packing with UID and GID from the current user and group (default 0640)")
 	flag.Int64Var(&fmaxsize, "fmaxsize", fmaxsize, "--fmaxsize=1048576 -  the maximum allowed regular file size for writing to Bolt archives, otherwise it skips the file. Maximum value: 33554432 bytes")

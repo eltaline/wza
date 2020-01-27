@@ -1292,7 +1292,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			})
 			if err != nil {
 
-				fmt.Printf("Can`t write file to db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				fmt.Printf("Can`t write a file to db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
 				keymutex.Unlock(dbf)
 				endbuffer.Reset()
@@ -2143,7 +2143,7 @@ func ZAPackSingle() {
 	})
 	if err != nil {
 
-		fmt.Printf("Can`t write file to db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		fmt.Printf("Can`t write a file to db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 		db.Close()
 		endbuffer.Reset()
 
