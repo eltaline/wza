@@ -391,6 +391,40 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 		dir := filepath.Dir(uri)
 		file := filepath.Base(uri)
 
+		if dir == "" || dir == "/" {
+			pwd, err := os.Getwd()
+			if err != nil {
+
+				if !progress {
+					fmt.Printf("Can`t get current directory error | File [%s] | Path [%s] | %v\n", file, pwd, err)
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			if pwd == "/" {
+
+				if !progress {
+					fmt.Printf("Can`t add a file to bolt archive in root/chroot filesystem directory restricted error | File [%s] | Path [%s] | %v\n", file, pwd, err)
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			dir = pwd
+
+		}
+
 		abs := fmt.Sprintf("%s/%s", dir, file)
 
 		dbn := filepath.Base(dir)
@@ -1589,6 +1623,22 @@ func ZAPackSingle() {
 
 	dir := filepath.Dir(uri)
 	file := filepath.Base(uri)
+
+	if dir == "" || dir == "/" {
+		pwd, err := os.Getwd()
+		if err != nil {
+			fmt.Printf("Can`t get current directory error | File [%s] | Path [%s] | %v\n", file, pwd, err)
+			os.Exit(1)
+		}
+
+		if pwd == "/" {
+			fmt.Printf("Can`t add a file to bolt archive in root/chroot filesystem directory restricted error | File [%s] | Path [%s] | %v\n", file, pwd, err)
+			os.Exit(1)
+		}
+
+		dir = pwd
+
+	}
 
 	abs := fmt.Sprintf("%s/%s", dir, file)
 
