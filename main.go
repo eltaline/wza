@@ -130,7 +130,7 @@ func init() {
 	flag.BoolVar(&verbose, "verbose", verbose, "--verbose - enables verbose mode (incompatible with --progress)")
 	flag.BoolVar(&vprint, "version", vprint, "--version - print version")
 	flag.BoolVar(&help, "help", help, "--help - displays help")
-	flag.BoolVar(&upgrade, "upgrade", upgrade, "--upgrade - upgrade bolt archives to latest version from a list (with --list=)")
+	flag.BoolVar(&upgrade, "upgrade", upgrade, "--upgrade - upgrade bolt archives to the latest version from a list (with --list=)")
 
 	flag.Parse()
 
