@@ -169,12 +169,14 @@ func RemoveFile(file string) error {
 
 // DB Helpers
 
-// KeyExists : check existence of requested key
-func KeyExists(db *bolt.DB, ibucket string, file string) (data string, err error) {
+// KeyExists : check existence of requested key in index/size/time bucket
+func KeyExists(db *bolt.DB, xbucket string, file string) (data string, err error) {
 
 	err = db.View(func(tx *bolt.Tx) error {
 
-		b := tx.Bucket([]byte(ibucket))
+		verr := errors.New("index/size/time bucket not exists")
+
+		b := tx.Bucket([]byte(xbucket))
 		if b != nil {
 
 			val := b.Get([]byte(file))
@@ -182,6 +184,8 @@ func KeyExists(db *bolt.DB, ibucket string, file string) (data string, err error
 				data = string(val)
 			}
 
+		} else {
+			return verr
 		}
 
 		return nil

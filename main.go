@@ -78,6 +78,8 @@ var (
 	tmpdir                string
 	threads               int64 = 1
 	freelist              string
+
+	upgrade bool = false
 )
 
 // Interrupt : custom interrupt handler
@@ -128,6 +130,7 @@ func init() {
 	flag.BoolVar(&verbose, "verbose", verbose, "--verbose - enables verbose mode (incompatible with --progress)")
 	flag.BoolVar(&vprint, "version", vprint, "--version - print version")
 	flag.BoolVar(&help, "help", help, "--help - displays help")
+	flag.BoolVar(&upgrade, "upgrade", upgrade, "--upgrade - upgrade bolt archives to latest version from a list (with --list=)")
 
 	flag.Parse()
 
@@ -147,7 +150,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	if !pack && !unpack && show == "" {
+	if !pack && !unpack && show == "" && !upgrade {
 		fmt.Printf("Can`t continue work without --pack or --unpack -or --show, use only one option | Pack [%t] | Unpack [%t] | Show [%s]\n", pack, unpack, show)
 		os.Exit(1)
 	}
@@ -162,7 +165,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	if show != "" && (pack || unpack || single != "" || list != "") {
+	if show != "" && (pack || unpack || single != "" || list != "" || upgrade) {
 		fmt.Printf("Can`t continue work with --show and other options, for show use only show option | Show [%s]\n", show)
 		os.Exit(1)
 	}
@@ -269,7 +272,17 @@ func init() {
 	mchlocktimeout := RBInt(locktimeout, 1, 3600)
 	Check(mchlocktimeout, fmt.Sprintf("%d", locktimeout), DoExit)
 
-	if show == "" {
+	if upgrade && (pack || unpack || show != "") {
+		fmt.Printf("Can`t continue work with --pack and --unpack or --show together, use --upgrade option only with --list= option | List [%s]\n", list)
+		os.Exit(1)
+	}
+
+	if upgrade && list == "" {
+		fmt.Printf("Can`t continue work with --upgrade option and empty --list= option, use --upgrade option only with --list= option | List [%s]\n", list)
+		os.Exit(1)
+	}
+
+	if show == "" && !upgrade {
 
 		switch {
 		case fdelete:
@@ -311,6 +324,16 @@ func init() {
 		}
 
 		fmt.Printf("\n")
+
+	}
+
+	if upgrade {
+
+		threads = 1
+		verbose = true
+		progress = false
+
+		fmt.Printf("Info | Upgrade Mode [ENABLED]\n")
 
 	}
 
@@ -366,6 +389,8 @@ func main() {
 		ZAUnpackSingle()
 	case show != "":
 		ZAShowSingle()
+	case list != "" && upgrade:
+		ZAUpgrade()
 	}
 
 	wg.Wait()

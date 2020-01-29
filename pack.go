@@ -320,6 +320,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 	bucket := "wzd1"
 	ibucket := "index"
+	sbucket := "size"
+	tbucket := "time"
 	cbucket := "count"
 
 	timeout := time.Duration(locktimeout) * time.Second
@@ -498,8 +500,16 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 		}
 
 		size := infile.Size()
+
+		sb := make([]byte, 8)
+		Endian.PutUint64(sb, uint64(size))
+
 		modt := infile.ModTime()
 		tmst := modt.Unix()
+
+		tb := make([]byte, 4)
+		Endian.PutUint32(tb, uint32(tmst))
+
 		filemode := infile.Mode()
 
 		cfilemode, err := strconv.ParseUint(fmt.Sprintf("%o", filemode), 8, 32)
@@ -633,6 +643,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 			}
 
+			// Keys Index Bucket
+
 			err = db.Update(func(tx *bolt.Tx) error {
 				_, err := tx.CreateBucketIfNotExists([]byte(ibucket))
 				if err != nil {
@@ -644,6 +656,117 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			if err != nil {
 
 				fmt.Printf("Can`t create index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+				keymutex.Unlock(dbf)
+
+				err = pfile.Close()
+				if err != nil {
+
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			// Keys Size Bucket
+
+			err = db.Update(func(tx *bolt.Tx) error {
+				_, err := tx.CreateBucketIfNotExists([]byte(sbucket))
+				if err != nil {
+					return err
+				}
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t create size db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+				keymutex.Unlock(dbf)
+
+				err = pfile.Close()
+				if err != nil {
+
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			// Keys Time Bucket
+
+			err = db.Update(func(tx *bolt.Tx) error {
+				_, err := tx.CreateBucketIfNotExists([]byte(tbucket))
+				if err != nil {
+					return err
+				}
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t create time db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+				keymutex.Unlock(dbf)
+
+				err = pfile.Close()
+				if err != nil {
+
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			// Buckets Internal Sharding Bucket
+
+			err = db.Update(func(tx *bolt.Tx) error {
+				_, err := tx.CreateBucketIfNotExists([]byte(cbucket))
+				if err != nil {
+					return err
+				}
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t create count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
 				keymutex.Unlock(dbf)
 
@@ -756,41 +879,6 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				}
 
 				continue
-
-			}
-
-			err = db.Update(func(tx *bolt.Tx) error {
-				_, err := tx.CreateBucketIfNotExists([]byte(cbucket))
-				if err != nil {
-					return err
-				}
-				return nil
-
-			})
-			if err != nil {
-
-				fmt.Printf("Can`t create count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-				db.Close()
-				keymutex.Unlock(dbf)
-
-				err = pfile.Close()
-				if err != nil {
-
-					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
-
-					if ignore {
-						continue
-					}
-
-					return
-
-				}
-
-				if ignore {
-					continue
-				}
-
-				return
 
 			}
 
@@ -1400,6 +1488,98 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 			}
 
+			err = db.Update(func(tx *bolt.Tx) error {
+
+				verr := errors.New("size bucket not exists")
+
+				b := tx.Bucket([]byte(sbucket))
+				if b != nil {
+					err = b.Put([]byte(file), sb)
+					if err != nil {
+						return err
+					}
+
+				} else {
+					return verr
+				}
+
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t write key to size db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+				keymutex.Unlock(dbf)
+				endbuffer.Reset()
+
+				err = pfile.Close()
+				if err != nil {
+
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			err = db.Update(func(tx *bolt.Tx) error {
+
+				verr := errors.New("time bucket not exists")
+
+				b := tx.Bucket([]byte(tbucket))
+				if b != nil {
+					err = b.Put([]byte(file), tb)
+					if err != nil {
+						return err
+					}
+
+				} else {
+					return verr
+				}
+
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t write key to time db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+				keymutex.Unlock(dbf)
+				endbuffer.Reset()
+
+				err = pfile.Close()
+				if err != nil {
+
+					fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
 			endbuffer.Reset()
 
 			err = pfile.Close()
@@ -1647,6 +1827,8 @@ func ZAPackSingle() {
 
 	bucket := "wzd"
 	ibucket := "index"
+	sbucket := "size"
+	tbucket := "time"
 	cbucket := "count"
 
 	timeout := time.Duration(locktimeout) * time.Second
@@ -1685,8 +1867,16 @@ func ZAPackSingle() {
 	}
 
 	size := infile.Size()
+
+	sb := make([]byte, 8)
+	Endian.PutUint64(sb, uint64(size))
+
 	modt := infile.ModTime()
 	tmst := modt.Unix()
+
+	tb := make([]byte, 4)
+	Endian.PutUint32(tb, uint32(tmst))
+
 	filemode := infile.Mode()
 
 	cfilemode, err := strconv.ParseUint(fmt.Sprintf("%o", filemode), 8, 32)
@@ -1765,6 +1955,8 @@ func ZAPackSingle() {
 
 	}
 
+	// Keys Index Bucket
+
 	err = db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte(ibucket))
 		if err != nil {
@@ -1776,6 +1968,81 @@ func ZAPackSingle() {
 	if err != nil {
 
 		fmt.Printf("Can`t create index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		db.Close()
+
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+			os.Exit(1)
+		}
+
+		os.Exit(1)
+
+	}
+
+	// Keys Size Bucket
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(sbucket))
+		if err != nil {
+			return err
+		}
+		return nil
+
+	})
+	if err != nil {
+
+		fmt.Printf("Can`t create size db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		db.Close()
+
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+			os.Exit(1)
+		}
+
+		os.Exit(1)
+
+	}
+
+	// Keys Time Bucket
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(tbucket))
+		if err != nil {
+			return err
+		}
+		return nil
+
+	})
+	if err != nil {
+
+		fmt.Printf("Can`t create time db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		db.Close()
+
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+			os.Exit(1)
+		}
+
+		os.Exit(1)
+
+	}
+
+	// Buckets Internal Sharding Bucket
+
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte(cbucket))
+		if err != nil {
+			return err
+		}
+		return nil
+
+	})
+	if err != nil {
+
+		fmt.Printf("Can`t create count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 		db.Close()
 
 		err = pfile.Close()
@@ -1837,29 +2104,6 @@ func ZAPackSingle() {
 		}
 
 		os.Exit(0)
-
-	}
-
-	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(cbucket))
-		if err != nil {
-			return err
-		}
-		return nil
-
-	})
-	if err != nil {
-
-		fmt.Printf("Can`t create count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-		db.Close()
-
-		err = pfile.Close()
-		if err != nil {
-			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
-			os.Exit(1)
-		}
-
-		os.Exit(1)
 
 	}
 
@@ -2231,6 +2475,74 @@ func ZAPackSingle() {
 	if err != nil {
 
 		fmt.Printf("Can`t write key to index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		db.Close()
+		endbuffer.Reset()
+
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+			os.Exit(1)
+		}
+
+		os.Exit(1)
+
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+
+		verr := errors.New("size bucket not exists")
+
+		b := tx.Bucket([]byte(sbucket))
+		if b != nil {
+			err = b.Put([]byte(file), sb)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			return verr
+		}
+
+		return nil
+
+	})
+	if err != nil {
+
+		fmt.Printf("Can`t write key to size db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+		db.Close()
+		endbuffer.Reset()
+
+		err = pfile.Close()
+		if err != nil {
+			fmt.Printf("Close full read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
+			os.Exit(1)
+		}
+
+		os.Exit(1)
+
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+
+		verr := errors.New("time bucket not exists")
+
+		b := tx.Bucket([]byte(tbucket))
+		if b != nil {
+			err = b.Put([]byte(file), tb)
+			if err != nil {
+				return err
+			}
+
+		} else {
+			return verr
+		}
+
+		return nil
+
+	})
+	if err != nil {
+
+		fmt.Printf("Can`t write key to time db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 		db.Close()
 		endbuffer.Reset()
 
