@@ -77,8 +77,6 @@ brews:
    homepage: "https://wzd.dev/"
    goarm: 7
 
-checksum:
-  name_template: 'checksums.txt'
 snapshot:
   name_template: "{{.Version}}-master"
 changelog:
