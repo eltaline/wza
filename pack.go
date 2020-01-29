@@ -507,8 +507,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 		modt := infile.ModTime()
 		tmst := modt.Unix()
 
-		tb := make([]byte, 4)
-		Endian.PutUint32(tb, uint32(tmst))
+		tb := make([]byte, 8)
+		Endian.PutUint64(tb, uint64(tmst))
 
 		filemode := infile.Mode()
 
@@ -1252,13 +1252,13 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				crcdata.Reset()
 
 				head := Header{
-					Size: uint64(size), Date: uint32(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
+					Size: uint64(size), Date: uint64(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
 				}
 
 				err = binary.Write(endbuffer, Endian, head)
 				if err != nil {
 
-					fmt.Printf("Write header data to db error | Header [%v] | File [%s] | DB [%s] | %v\n", head, file, dbf, err)
+					fmt.Printf("Write binary header data to db error | File [%s] | DB [%s] | Header [%v] | %v\n", file, dbf, head, err)
 					db.Close()
 					keymutex.Unlock(dbf)
 					rawbuffer.Reset()
@@ -1326,13 +1326,13 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			} else {
 
 				head := Header{
-					Size: uint64(size), Date: uint32(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
+					Size: uint64(size), Date: uint64(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
 				}
 
 				err = binary.Write(endbuffer, Endian, head)
 				if err != nil {
 
-					fmt.Printf("Write header data to db error | Header [%v] | File [%s] | DB [%s] | %v\n", head, file, dbf, err)
+					fmt.Printf("Write binary header data to db error | File [%s] | DB [%s] | Header [%v] | %v\n", file, dbf, head, err)
 					db.Close()
 					keymutex.Unlock(dbf)
 					rawbuffer.Reset()
@@ -1632,7 +1632,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				var readhead Header
 
-				headbuffer := make([]byte, 32)
+				headbuffer := make([]byte, 36)
 
 				hsizebuffer, err := pread.Read(headbuffer)
 				if err != nil {
@@ -1874,8 +1874,8 @@ func ZAPackSingle() {
 	modt := infile.ModTime()
 	tmst := modt.Unix()
 
-	tb := make([]byte, 4)
-	Endian.PutUint32(tb, uint32(tmst))
+	tb := make([]byte, 8)
+	Endian.PutUint64(tb, uint64(tmst))
 
 	filemode := infile.Mode()
 
@@ -2324,13 +2324,13 @@ func ZAPackSingle() {
 		crcdata.Reset()
 
 		head := Header{
-			Size: uint64(size), Date: uint32(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
+			Size: uint64(size), Date: uint64(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
 		}
 
 		err = binary.Write(endbuffer, Endian, head)
 		if err != nil {
 
-			fmt.Printf("Write header data to db error | Header [%v] | File [%s] | DB [%s] | %v\n", head, file, dbf, err)
+			fmt.Printf("Write binary header data to db error | File [%s] | DB [%s] | Header [%v] | %v\n", file, dbf, head, err)
 			db.Close()
 			rawbuffer.Reset()
 			readbuffer.Reset()
@@ -2374,13 +2374,13 @@ func ZAPackSingle() {
 	} else {
 
 		head := Header{
-			Size: uint64(size), Date: uint32(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
+			Size: uint64(size), Date: uint64(tmst), Mode: uint16(vfilemode), Uuid: uint16(Uid), Guid: uint16(Gid), Comp: uint8(0), Encr: uint8(0), Crcs: wcrc, Rsvr: uint64(0),
 		}
 
 		err = binary.Write(endbuffer, Endian, head)
 		if err != nil {
 
-			fmt.Printf("Write header data to db error | Header [%v] | File [%s] | DB [%s] | %v\n", head, file, dbf, err)
+			fmt.Printf("Write binary header data to db error | File [%s] | DB [%s] | Header [%v] | %v\n", file, dbf, head, err)
 			db.Close()
 			rawbuffer.Reset()
 			endbuffer.Reset()
@@ -2595,7 +2595,7 @@ func ZAPackSingle() {
 
 		var readhead Header
 
-		headbuffer := make([]byte, 32)
+		headbuffer := make([]byte, 36)
 
 		hsizebuffer, err := pread.Read(headbuffer)
 		if err != nil {

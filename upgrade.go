@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eltaline/bolt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -215,7 +216,7 @@ func ZAUpgrade() {
 			dabs := fmt.Sprintf("%s/%s", dir, rkey)
 
 			sdata := int64(-1)
-			tdata := int32(-1)
+			tdata := int64(-1)
 
 			err = db.View(func(tx *bolt.Tx) error {
 
@@ -254,7 +255,7 @@ func ZAUpgrade() {
 				if b != nil {
 					val := b.Get([]byte(rkey))
 					if val != nil {
-						tdata = int32(Endian.Uint32(val))
+						tdata = int64(Endian.Uint64(val))
 					}
 					return nil
 				} else {
@@ -274,8 +275,6 @@ func ZAUpgrade() {
 				return
 
 			}
-
-			fmt.Printf("%s ; %d ; %d\n", rkey, sdata, tdata)
 
 			if sdata != -1 {
 				continue
@@ -316,7 +315,7 @@ func ZAUpgrade() {
 
 			pread := bytes.NewReader(pdata)
 
-			var readhead Header
+			var readhead OldHeader
 
 			headbuffer := make([]byte, 32)
 
@@ -344,7 +343,7 @@ func ZAUpgrade() {
 				fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", rkey, dbf, hread, err)
 				pdata = nil
 				headbuffer = nil
-				readhead = Header{}
+				readhead = OldHeader{}
 
 				if ignore {
 					continue
@@ -360,10 +359,96 @@ func ZAUpgrade() {
 			sb := make([]byte, 8)
 			Endian.PutUint64(sb, readhead.Size)
 
-			tb := make([]byte, 4)
-			Endian.PutUint32(tb, readhead.Date)
+			tb := make([]byte, 8)
+			Endian.PutUint64(tb, uint64(readhead.Date))
 
-			readhead = Header{}
+			nsize := readhead.Size
+			ntmst := uint64(readhead.Date)
+			nvfilemode := readhead.Mode
+			nUid := readhead.Uuid
+			nGid := readhead.Guid
+			nwcrc := readhead.Crcs
+
+			readhead = OldHeader{}
+
+			endbuffer := new(bytes.Buffer)
+
+			head := Header{
+				Size: nsize, Date: ntmst, Mode: nvfilemode, Uuid: nUid, Guid: nGid, Comp: uint8(0), Encr: uint8(0), Crcs: nwcrc, Rsvr: uint64(0),
+			}
+
+			err = binary.Write(endbuffer, Endian, head)
+			if err != nil {
+
+				fmt.Printf("Write binary header data to db error | File [%s] | DB [%s] | Header [%v] | %v\n", rkey, dbf, head, err)
+				pdata = nil
+				endbuffer.Reset()
+				//                                      head = Header{}
+
+				if ignore {
+					continue
+				}
+
+				db.Close()
+				return
+
+			}
+
+			fmt.Printf("Reading/Writing header | File [%s] | Size [%d] | Date [%d] | Crcs [%d] | DB [%s]\n", rkey, nsize, ntmst, nwcrc, dbf)
+
+			_, err = endbuffer.ReadFrom(pread)
+			if err != nil && err != io.EOF {
+
+				fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
+				pdata = nil
+				endbuffer.Reset()
+				//                                      head = Header{}
+
+				if ignore {
+					continue
+				}
+
+				db.Close()
+				return
+
+			}
+
+			err = db.Update(func(tx *bolt.Tx) error {
+
+				verr := errors.New("bucket not exists")
+
+				b := tx.Bucket([]byte(bucket))
+				if b != nil {
+					err = b.Put([]byte(rkey), endbuffer.Bytes())
+					if err != nil {
+						return err
+					}
+
+				} else {
+					return verr
+				}
+
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t write a file to db error | File [%s] | DB [%s] | %v\n", rkey, dbf, err)
+
+				pdata = nil
+				endbuffer.Reset()
+
+				if ignore {
+					continue
+				}
+
+				db.Close()
+				return
+
+			}
+
+			pdata = nil
+			endbuffer.Reset()
 
 			err = db.Update(func(tx *bolt.Tx) error {
 
@@ -386,12 +471,12 @@ func ZAUpgrade() {
 			if err != nil {
 
 				fmt.Printf("Can`t write key to size db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-				db.Close()
 
 				if ignore {
 					continue
 				}
 
+				db.Close()
 				return
 
 			}
@@ -417,12 +502,12 @@ func ZAUpgrade() {
 			if err != nil {
 
 				fmt.Printf("Can`t write key to time db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-				db.Close()
 
 				if ignore {
 					continue
 				}
 
+				db.Close()
 				return
 
 			}
@@ -436,6 +521,20 @@ func ZAUpgrade() {
 			if verbose {
 				fmt.Printf("Upgrading file | File [%s] | Path [%s] | Elapsed [%f] | DB [%s]\n", rkey, dabs, elapsed, dbf)
 			}
+
+		}
+
+		err = db.CompactQuietly()
+		if err != nil {
+
+			fmt.Printf("On the fly delayed compaction error | DB [%s] | %v\n", dbf, err)
+			db.Close()
+
+			if ignore {
+				continue
+			}
+
+			return
 
 		}
 

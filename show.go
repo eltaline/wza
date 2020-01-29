@@ -141,7 +141,7 @@ func ZAShowSingle() {
 
 		var readhead Header
 
-		headbuffer := make([]byte, 32)
+		headbuffer := make([]byte, 36)
 
 		hsizebuffer, err := pread.Read(headbuffer)
 		if err != nil {

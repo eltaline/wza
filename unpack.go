@@ -434,7 +434,7 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 
 			var readhead Header
 
-			headbuffer := make([]byte, 32)
+			headbuffer := make([]byte, 36)
 
 			hsizebuffer, err := pread.Read(headbuffer)
 			if err != nil {
@@ -831,7 +831,7 @@ func ZAUnpackSingle() {
 
 		var readhead Header
 
-		headbuffer := make([]byte, 32)
+		headbuffer := make([]byte, 36)
 
 		hsizebuffer, err := pread.Read(headbuffer)
 		if err != nil {
