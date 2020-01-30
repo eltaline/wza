@@ -54,3 +54,5 @@ Section [command line]
         --verbose - enables verbose mode (incompatible with --progress)
 - -version
         --version - print version
+- -upgrade
+        --upgrade - upgrade Bolt archives to the latest version from a list (with --list=)
