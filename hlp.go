@@ -196,8 +196,8 @@ func KeyExists(db *bolt.DB, xbucket string, file string) (data string, err error
 
 }
 
-// KeyCount : count keys in an index bucket for requested directory
-func KeyCount(db *bolt.DB, ibucket string) (cnt int, err error) {
+// KeysCount : count keys in an index bucket for requested directory
+func KeysCount(db *bolt.DB, ibucket string) (cnt int, err error) {
 
 	cnt = 1
 
@@ -223,8 +223,8 @@ func KeyCount(db *bolt.DB, ibucket string) (cnt int, err error) {
 
 }
 
-// KeyCountBucket : count keys in a requested bucket
-func KeyCountBucket(db *bolt.DB, bucket string) (cnt int, err error) {
+// KeysCountBucket : count keys in a requested bucket
+func KeysCountBucket(db *bolt.DB, bucket string) (cnt int, err error) {
 
 	cnt = 1
 

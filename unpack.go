@@ -624,7 +624,7 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 
 		if fdelete {
 
-			keycount, err := KeyCount(db, ibucket)
+			keyscount, err := KeysCount(db, ibucket)
 			if err != nil {
 
 				fmt.Printf("Can`t count keys of files in index db bucket error | DB [%s] | %v\n", dbf, err)
@@ -640,7 +640,7 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 
 			db.Close()
 
-			if keycount == loopcount {
+			if keyscount == loopcount {
 
 				err = RemoveFileDB(dbf)
 				if err != nil {
@@ -661,7 +661,7 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 
 			} else {
 
-				fmt.Printf("Keys count in db != extracted file, | DB [%s] | DB Keys [%d] | Extracted Files [%d] | %v\n", dbf, keycount, loopcount, err)
+				fmt.Printf("Keys count in db != extracted file, | DB [%s] | DB Keys [%d] | Extracted Files [%d] | %v\n", dbf, keyscount, loopcount, err)
 
 				if ignore {
 					continue
@@ -978,7 +978,7 @@ func ZAUnpackSingle() {
 
 	if fdelete {
 
-		keycount, err := KeyCount(db, ibucket)
+		keyscount, err := KeysCount(db, ibucket)
 		if err != nil {
 
 			fmt.Printf("Can`t count keys of files in index db bucket error | DB [%s] | %v\n", dbf, err)
@@ -989,7 +989,7 @@ func ZAUnpackSingle() {
 
 		db.Close()
 
-		if keycount == loopcount {
+		if keyscount == loopcount {
 
 			err = RemoveFileDB(dbf)
 			if err != nil {
@@ -1003,7 +1003,7 @@ func ZAUnpackSingle() {
 
 		} else {
 
-			fmt.Printf("Keys count in db != extracted file, | DB [%s] | DB Keys [%d] | Extracted Files [%d] | %v\n", dbf, keycount, loopcount, err)
+			fmt.Printf("Keys count in db != extracted file, | DB [%s] | DB Keys [%d] | Extracted Files [%d] | %v\n", dbf, keyscount, loopcount, err)
 			os.Exit(1)
 
 		}

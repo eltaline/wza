@@ -385,8 +385,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 		start := time.Now()
 
-		keycount := 0
-		keybytes := 0
+		keyscount := 0
+		keysbytes := 0
 
 		uri := scanner.Text()
 
@@ -914,7 +914,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				lastbucket := fmt.Sprintf("wzd%d", keybucket)
 
-				keycount, err = KeyCountBucket(db, lastbucket)
+				keyscount, err = KeysCountBucket(db, lastbucket)
 				if err != nil {
 
 					fmt.Printf("Can`t count keys of files in last db bucket error | DB [%s] | %v\n", dbf, err)
@@ -942,7 +942,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				}
 
-				keybytes, err = BucketStats(db, lastbucket)
+				keysbytes, err = BucketStats(db, lastbucket)
 				if err != nil {
 
 					fmt.Printf("Can`t count bytes of files in last db bucket error | DB [%s] | %v\n", dbf, err)
@@ -970,7 +970,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				}
 
-				if keycount >= perbucket || keybytes >= 536870912 {
+				if keyscount >= perbucket || keysbytes >= 536870912 {
 
 					bucket = fmt.Sprintf("wzd%d", keybucket+1)
 
@@ -1030,7 +1030,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				bucket = keyexists
 
-				keycount, err = KeyCountBucket(db, bucket)
+				keyscount, err = KeysCountBucket(db, bucket)
 				if err != nil {
 
 					fmt.Printf("Can`t count keys of files in last db bucket error | DB [%s] | %v\n", dbf, err)
@@ -1058,7 +1058,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				}
 
-				keybytes, err = BucketStats(db, bucket)
+				keysbytes, err = BucketStats(db, bucket)
 				if err != nil {
 
 					fmt.Printf("Can`t count bytes of files in last db bucket error | DB [%s] | %v\n", dbf, err)
@@ -1743,7 +1743,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 		elapsed := float64(time.Since(start)) / float64(time.Millisecond)
 
 		if verbose {
-			fmt.Printf("Packing file | File [%s] | Path [%s] | Bucket [%s] | Past Count [%d] | Past Bytes [%d] | Elapsed [%f] | DB [%s]\n", file, abs, bucket, keycount, keybytes, elapsed, dbf)
+			fmt.Printf("Packing file | File [%s] | Path [%s] | Bucket [%s] | Past Count [%d] | Past Bytes [%d] | Elapsed [%f] | DB [%s]\n", file, abs, bucket, keyscount, keysbytes, elapsed, dbf)
 		}
 
 		if fdelete {
@@ -1796,8 +1796,8 @@ func ZAPackSingle() {
 
 	var vfilemode uint64
 
-	keycount := 0
-	keybytes := 0
+	keyscount := 0
+	keysbytes := 0
 
 	uri := single
 
@@ -2127,7 +2127,7 @@ func ZAPackSingle() {
 
 		lastbucket := fmt.Sprintf("wzd%d", keybucket)
 
-		keycount, err := KeyCountBucket(db, lastbucket)
+		keyscount, err := KeysCountBucket(db, lastbucket)
 		if err != nil {
 
 			fmt.Printf("Can`t count keys of files in last db bucket error | DB [%s] | %v\n", dbf, err)
@@ -2143,7 +2143,7 @@ func ZAPackSingle() {
 
 		}
 
-		keybytes, err = BucketStats(db, lastbucket)
+		keysbytes, err = BucketStats(db, lastbucket)
 		if err != nil {
 
 			fmt.Printf("Can`t count bytes of files in last db bucket error | DB [%s] | %v\n", dbf, err)
@@ -2159,7 +2159,7 @@ func ZAPackSingle() {
 
 		}
 
-		if keycount >= perbucket || keybytes >= 536870912 {
+		if keyscount >= perbucket || keysbytes >= 536870912 {
 
 			bucket = fmt.Sprintf("wzd%d", keybucket+1)
 
@@ -2697,7 +2697,7 @@ func ZAPackSingle() {
 	elapsed := float64(time.Since(start)) / float64(time.Millisecond)
 
 	if verbose {
-		fmt.Printf("Packing file | File [%s] | Path [%s] | Bucket [%s] | Past Count [%d] | Past Bytes [%d] | Elapsed [%f] | DB [%s]\n", file, abs, bucket, keycount, keybytes, elapsed, dbf)
+		fmt.Printf("Packing file | File [%s] | Path [%s] | Bucket [%s] | Past Count [%d] | Past Bytes [%d] | Elapsed [%f] | DB [%s]\n", file, abs, bucket, keyscount, keysbytes, elapsed, dbf)
 	}
 
 	if fdelete {
