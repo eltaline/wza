@@ -427,10 +427,10 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 		}
 
-		abs := fmt.Sprintf("%s/%s", dir, file)
+		abs := filepath.Clean(dir + "/" + file)
 
 		dbn := filepath.Base(dir)
-		dbf := fmt.Sprintf("%s/%s.bolt", dir, dbn)
+		dbf := filepath.Clean(dir + "/" + dbn + ".bolt")
 
 		if DirExists(abs) {
 
@@ -1820,10 +1820,10 @@ func ZAPackSingle() {
 
 	}
 
-	abs := fmt.Sprintf("%s/%s", dir, file)
+	abs := filepath.Clean(dir + "/" + file)
 
 	dbn := filepath.Base(dir)
-	dbf := fmt.Sprintf("%s/%s.bolt", dir, dbn)
+	dbf := filepath.Clean(dir + "/" + dbn + ".bolt")
 
 	bucket := "wzd"
 	ibucket := "index"

@@ -276,10 +276,10 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 		dir := filepath.Dir(uri)
 		file := filepath.Base(uri)
 
-		abs := fmt.Sprintf("%s/%s", dir, file)
+		abs := filepath.Clean(dir + "/" + file)
 
 		dbn := filepath.Base(dir)
-		dbf := fmt.Sprintf("%s/%s.bolt", dir, dbn)
+		dbf := filepath.Clean(dir + "/" + dbn + ".bolt")
 
 		if DirExists(abs) {
 
@@ -360,7 +360,7 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 				pos := b.Cursor()
 
 				for inkey, inval := pos.First(); inkey != nil; inkey, inval = pos.Next() {
-					k.key = fmt.Sprintf("%s", inkey)
+					k.key = string(inkey)
 					k.val = string(inval)
 					keys = append(keys, k)
 				}
@@ -393,7 +393,7 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 
 			rkey = hkey.key
 			bucket = hkey.val
-			dabs := fmt.Sprintf("%s/%s", dir, rkey)
+			dabs := filepath.Clean(dir + "/" + rkey)
 
 			if FileExists(dabs) && !overwrite {
 				loopcount++
@@ -717,10 +717,10 @@ func ZAUnpackSingle() {
 	dir := filepath.Dir(uri)
 	file := filepath.Base(uri)
 
-	abs := fmt.Sprintf("%s/%s", dir, file)
+	abs := filepath.Clean(dir + "/" + file)
 
 	dbn := filepath.Base(dir)
-	dbf := fmt.Sprintf("%s/%s.bolt", dir, dbn)
+	dbf := filepath.Clean(dir + "/" + dbn + ".bolt")
 
 	if DirExists(abs) {
 		fmt.Printf("Skipping directory extract from list | Directory [%s]\n", abs)
@@ -768,7 +768,7 @@ func ZAUnpackSingle() {
 			pos := b.Cursor()
 
 			for inkey, inval := pos.First(); inkey != nil; inkey, inval = pos.Next() {
-				k.key = fmt.Sprintf("%s", inkey)
+				k.key = string(inkey)
 				k.val = string(inval)
 				keys = append(keys, k)
 			}
@@ -796,7 +796,7 @@ func ZAUnpackSingle() {
 
 		rkey = hkey.key
 		bucket = hkey.val
-		dabs := fmt.Sprintf("%s/%s", dir, rkey)
+		dabs := filepath.Clean(dir + "/" + rkey)
 
 		if FileExists(dabs) && !overwrite {
 			loopcount++

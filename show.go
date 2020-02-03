@@ -33,10 +33,10 @@ func ZAShowSingle() {
 	dir := filepath.Dir(uri)
 	file := filepath.Base(uri)
 
-	abs := fmt.Sprintf("%s/%s", dir, file)
+	abs := filepath.Clean(dir + "/" + file)
 
 	dbn := filepath.Base(dir)
-	dbf := fmt.Sprintf("%s/%s.bolt", dir, dbn)
+	dbf := filepath.Clean(dir + "/" + dbn + ".bolt")
 
 	if DirExists(abs) {
 		fmt.Printf("Skipping directory extract from list | Directory [%s]\n", abs)
@@ -82,7 +82,7 @@ func ZAShowSingle() {
 			pos := b.Cursor()
 
 			for inkey, inval := pos.First(); inkey != nil; inkey, inval = pos.Next() {
-				k.key = fmt.Sprintf("%s", inkey)
+				k.key = string(inkey)
 				k.val = string(inval)
 				keys = append(keys, k)
 			}
