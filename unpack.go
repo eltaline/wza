@@ -22,6 +22,8 @@ import (
 func ZAUnpackList() {
 	defer wg.Done()
 
+	var err error
+
 	// Wait Group
 
 	wg.Add(1)

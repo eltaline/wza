@@ -23,6 +23,8 @@ import (
 func ZAPackList() {
 	defer wg.Done()
 
+	var err error
+
 	// Wait Group
 
 	wg.Add(1)
@@ -315,6 +317,8 @@ func ZAPackList() {
 // ZAPackListThread : from ZAPackList: packing all files to bolt archives, according to the threaded lists of files
 func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname string, p *mpb.Progress, name string) {
 	defer wgthread.Done()
+
+	var err error
 
 	var vfilemode uint64
 
@@ -646,7 +650,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			// Keys Index Bucket
 
 			err = db.Update(func(tx *bolt.Tx) error {
-				_, err := tx.CreateBucketIfNotExists([]byte(ibucket))
+				_, err = tx.CreateBucketIfNotExists([]byte(ibucket))
 				if err != nil {
 					return err
 				}
@@ -683,7 +687,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			// Keys Size Bucket
 
 			err = db.Update(func(tx *bolt.Tx) error {
-				_, err := tx.CreateBucketIfNotExists([]byte(sbucket))
+				_, err = tx.CreateBucketIfNotExists([]byte(sbucket))
 				if err != nil {
 					return err
 				}
@@ -720,7 +724,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			// Keys Time Bucket
 
 			err = db.Update(func(tx *bolt.Tx) error {
-				_, err := tx.CreateBucketIfNotExists([]byte(tbucket))
+				_, err = tx.CreateBucketIfNotExists([]byte(tbucket))
 				if err != nil {
 					return err
 				}
@@ -757,7 +761,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			// Buckets Internal Sharding Bucket
 
 			err = db.Update(func(tx *bolt.Tx) error {
-				_, err := tx.CreateBucketIfNotExists([]byte(cbucket))
+				_, err = tx.CreateBucketIfNotExists([]byte(cbucket))
 				if err != nil {
 					return err
 				}
@@ -1139,7 +1143,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			}
 
 			err = db.Update(func(tx *bolt.Tx) error {
-				_, err := tx.CreateBucketIfNotExists([]byte(bucket))
+				_, err = tx.CreateBucketIfNotExists([]byte(bucket))
 				if err != nil {
 					return err
 				}
@@ -1788,6 +1792,8 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 func ZAPackSingle() {
 	defer wg.Done()
 
+	var err error
+
 	// Wait Group
 
 	wg.Add(1)
@@ -1958,7 +1964,7 @@ func ZAPackSingle() {
 	// Keys Index Bucket
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(ibucket))
+		_, err = tx.CreateBucketIfNotExists([]byte(ibucket))
 		if err != nil {
 			return err
 		}
@@ -1983,7 +1989,7 @@ func ZAPackSingle() {
 	// Keys Size Bucket
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(sbucket))
+		_, err = tx.CreateBucketIfNotExists([]byte(sbucket))
 		if err != nil {
 			return err
 		}
@@ -2008,7 +2014,7 @@ func ZAPackSingle() {
 	// Keys Time Bucket
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(tbucket))
+		_, err = tx.CreateBucketIfNotExists([]byte(tbucket))
 		if err != nil {
 			return err
 		}
@@ -2033,7 +2039,7 @@ func ZAPackSingle() {
 	// Buckets Internal Sharding Bucket
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(cbucket))
+		_, err = tx.CreateBucketIfNotExists([]byte(cbucket))
 		if err != nil {
 			return err
 		}
@@ -2248,7 +2254,7 @@ func ZAPackSingle() {
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(bucket))
+		_, err = tx.CreateBucketIfNotExists([]byte(bucket))
 		if err != nil {
 			return err
 		}

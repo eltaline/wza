@@ -17,6 +17,8 @@ import (
 func ZAShowSingle() {
 	defer wg.Done()
 
+	var err error
+
 	// Wait Group
 
 	wg.Add(1)

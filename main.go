@@ -356,13 +356,15 @@ func init() {
 
 func main() {
 
+	var err error
+
 	// System Handling
 
 	DetectEndian()
 	DetectUser()
 	Interrupt()
 
-	err := os.MkdirAll(tmpdir, 0777)
+	err = os.MkdirAll(tmpdir, 0777)
 	if err != nil {
 		fmt.Printf("Can`t create temporary directory error | Directory [%s] | %v\n", tmpdir, err)
 		os.Exit(1)

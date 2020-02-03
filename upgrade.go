@@ -18,6 +18,8 @@ import (
 func ZAUpgrade() {
 	defer wg.Done()
 
+	var err error
+
 	// Wait Group
 
 	wg.Add(1)
@@ -125,7 +127,7 @@ func ZAUpgrade() {
 		// Keys Size Bucket
 
 		err = db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists([]byte(sbucket))
+			_, err = tx.CreateBucketIfNotExists([]byte(sbucket))
 			if err != nil {
 				return err
 			}
@@ -148,7 +150,7 @@ func ZAUpgrade() {
 		// Keys Time Bucket
 
 		err = db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists([]byte(tbucket))
+			_, err = tx.CreateBucketIfNotExists([]byte(tbucket))
 			if err != nil {
 				return err
 			}
