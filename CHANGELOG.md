@@ -1,3 +1,10 @@
+Version: 1.1.3
+========
+
+Fixed in version 1.1.3:
+
+- Minor bug fixes
+
 Version: 1.1.2
 ========
 

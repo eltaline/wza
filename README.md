@@ -7,18 +7,14 @@ for conversion regular files to Bolt аrchives and these unpacking. Archiver is 
 
 <img src="/images/wzd-scheme.png" alt="wZD Scheme"/>
 
-Current stable version: 1.1.2
+Current stable version: 1.1.3
 ========
 
 - <a href=/CHANGELOG.md>Changelog</a>
 
-Added in version 1.1.2:
+Fixed in version 1.1.3:
 
-- Upgrade parameter (--upgrade) for upgrading format in Bolt archives
-
-Fixed in version 1.1.2:
-
-- Fixed memory leaks
+- Minor bug fixes
 
 Features
 ========
