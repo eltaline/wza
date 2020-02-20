@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sync"
 	"time"
 )
 
@@ -175,7 +176,7 @@ func ZAUnpackList() {
 
 		wgthread.Add(1)
 
-		go ZAUnpackListThread(listname, p, name)
+		go ZAUnpackListThread(listname, p, name, &wgthread)
 
 		time.Sleep(time.Duration(250) * time.Millisecond)
 
@@ -206,7 +207,7 @@ func ZAUnpackList() {
 }
 
 // ZAUnpackListThread : from ZAUnpackList: unpacking all files from the threaded lists of bolt archives
-func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
+func ZAUnpackListThread(listname string, p *mpb.Progress, name string, wgthread *sync.WaitGroup) {
 	defer wgthread.Done()
 
 	// Wait Group
@@ -280,8 +281,7 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 
 		abs := filepath.Clean(dir + "/" + file)
 
-		dbn := filepath.Base(dir)
-		dbf := filepath.Clean(dir + "/" + dbn + ".bolt")
+		dbf := filepath.Clean(uri)
 
 		if DirExists(abs) {
 
@@ -497,8 +497,6 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 
 				tee := io.TeeReader(pread, &readbuffer)
 
-				rtbl := crc32.MakeTable(0xEDB88320)
-
 				rcrcdata := new(bytes.Buffer)
 
 				_, err = rcrcdata.ReadFrom(tee)
@@ -518,7 +516,7 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string) {
 
 				}
 
-				rcrc = crc32.Checksum(rcrcdata.Bytes(), rtbl)
+				rcrc = crc32.Checksum(rcrcdata.Bytes(), ctbl32)
 
 				rcrcdata.Reset()
 
@@ -721,8 +719,7 @@ func ZAUnpackSingle() {
 
 	abs := filepath.Clean(dir + "/" + file)
 
-	dbn := filepath.Base(dir)
-	dbf := filepath.Clean(dir + "/" + dbn + ".bolt")
+	dbf := filepath.Clean(uri)
 
 	if DirExists(abs) {
 		fmt.Printf("Skipping directory extract from list | Directory [%s]\n", abs)
@@ -884,8 +881,6 @@ func ZAUnpackSingle() {
 
 			tee := io.TeeReader(pread, &readbuffer)
 
-			rtbl := crc32.MakeTable(0xEDB88320)
-
 			rcrcdata := new(bytes.Buffer)
 
 			_, err = rcrcdata.ReadFrom(tee)
@@ -900,7 +895,7 @@ func ZAUnpackSingle() {
 
 			}
 
-			rcrc = crc32.Checksum(rcrcdata.Bytes(), rtbl)
+			rcrc = crc32.Checksum(rcrcdata.Bytes(), ctbl32)
 
 			rcrcdata.Reset()
 

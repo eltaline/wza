@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -186,7 +187,7 @@ func ZAPackList() {
 
 		wgthread.Add(1)
 
-		go ZAPackListThread(keymutex, mcmp, listname, p, name)
+		go ZAPackListThread(keymutex, mcmp, listname, p, name, &wgthread)
 
 		time.Sleep(time.Duration(250) * time.Millisecond)
 
@@ -315,7 +316,7 @@ func ZAPackList() {
 }
 
 // ZAPackListThread : from ZAPackList: packing all files to bolt archives, according to the threaded lists of files
-func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname string, p *mpb.Progress, name string) {
+func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname string, p *mpb.Progress, name string, wgthread *sync.WaitGroup) {
 	defer wgthread.Done()
 
 	var err error
@@ -559,6 +560,210 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			perbucket = 32
 		}
 
+		var bf BoltFiles
+		var bfiles []BoltFiles
+
+		var bcount int64 = 0
+		var ncount int64 = 0
+		var dcount int64 = 0
+
+		if FileExists(dbf) {
+
+			bf.Name = dbf
+			bfiles = append(bfiles, bf)
+
+			bcount++
+
+		}
+
+		for {
+
+			dcount++
+			ndbf := fmt.Sprintf("%s/%s_%08d.bolt", dir, dbn, dcount)
+
+			if FileExists(ndbf) {
+
+				bcount++
+
+				bf.Name = ndbf
+				bfiles = append(bfiles, bf)
+
+			} else {
+				break
+			}
+
+		}
+
+		if bcount == 0 {
+
+			db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries, freelist)
+			if err != nil {
+
+				fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			err = os.Chmod(dbf, filemode)
+			if err != nil {
+
+				fmt.Printf("Can`t chmod db error | DB [%s] | %v\n", dbf, err)
+				db.Close()
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			// Keys Index Bucket
+
+			err = db.Update(func(tx *bolt.Tx) error {
+				_, err = tx.CreateBucketIfNotExists([]byte(ibucket))
+				if err != nil {
+					return err
+				}
+				return nil
+
+			})
+			if err != nil {
+
+				fmt.Printf("Can`t create index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			db.Close()
+
+			bf.Name = dbf
+			bfiles = append(bfiles, bf)
+
+			bcount++
+
+		}
+
+		for _, bfile := range bfiles {
+
+			ncount++
+
+			dbf = bfile.Name
+
+			lndb, err := os.Lstat(dbf)
+			if err != nil {
+
+				fmt.Printf("Can`t stat db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			if lndb.Mode()&os.ModeType != 0 {
+
+				fmt.Printf("Non-regular db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			indb, err := os.Stat(dbf)
+			if err != nil {
+
+				fmt.Printf("Can`t stat db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			bsize := indb.Size()
+
+			db, err := BoltOpenRead(dbf, bfilemode, timeout, opentries, freelist)
+			if err != nil {
+
+				fmt.Printf("Can`t open db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			keyexists, err := KeyExists(db, ibucket, file)
+			if err != nil {
+
+				fmt.Printf("Can`t check key of file in index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+				db.Close()
+
+				if ignore {
+					continue
+				}
+
+				return
+
+			}
+
+			if keyexists != "" {
+				db.Close()
+				break
+			}
+
+			if ncount == bcount {
+
+				keyscnt, err := KeysCount(db, ibucket)
+				if err != nil {
+
+					fmt.Printf("Can`t count keys of all files in index db bucket error | File [%s] | DB [%s] | %v", file, dbf, err)
+					db.Close()
+
+					if ignore {
+						continue
+					}
+
+					return
+
+				}
+
+				if bsize >= smaxsize || keyscnt >= skeyscnt {
+
+					db.Close()
+					dbf = fmt.Sprintf("%s/%s_%08d.bolt", dir, dbn, ncount)
+					bucket = "wzd1"
+					break
+
+				}
+
+			}
+
+			db.Close()
+
+		}
+
 		key := false
 
 		for i := 0; i < trytimes; i++ {
@@ -586,7 +791,6 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				return
 
 			}
-			// No need to defer in loop
 
 			wcrc := uint32(0)
 			rcrc := uint32(0)
@@ -617,7 +821,6 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				return
 
 			}
-			// No need to defer in loop
 
 			err = os.Chmod(dbf, bfilemode)
 			if err != nil {
@@ -1216,8 +1419,6 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				var readbuffer bytes.Buffer
 				tee := io.TeeReader(rawbuffer, &readbuffer)
 
-				tbl := crc32.MakeTable(0xEDB88320)
-
 				crcdata := new(bytes.Buffer)
 
 				_, err = crcdata.ReadFrom(tee)
@@ -1251,7 +1452,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				}
 
-				wcrc = crc32.Checksum(crcdata.Bytes(), tbl)
+				wcrc = crc32.Checksum(crcdata.Bytes(), ctbl32)
 
 				crcdata.Reset()
 
@@ -1678,8 +1879,6 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				headbuffer = nil
 				readhead = Header{}
 
-				rtbl := crc32.MakeTable(0xEDB88320)
-
 				rcrcdata := new(bytes.Buffer)
 
 				_, err = rcrcdata.ReadFrom(pread)
@@ -1699,7 +1898,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				}
 
-				rcrc = crc32.Checksum(rcrcdata.Bytes(), rtbl)
+				rcrc = crc32.Checksum(rcrcdata.Bytes(), ctbl32)
 
 				pdata = nil
 				rcrcdata.Reset()
@@ -1831,7 +2030,7 @@ func ZAPackSingle() {
 	dbn := filepath.Base(dir)
 	dbf := filepath.Clean(dir + "/" + dbn + ".bolt")
 
-	bucket := "wzd"
+	bucket := "wzd1"
 	ibucket := "index"
 	sbucket := "size"
 	tbucket := "time"
@@ -1916,6 +2115,147 @@ func ZAPackSingle() {
 		perbucket = 64
 	case size >= 16777216:
 		perbucket = 32
+	}
+
+	var bf BoltFiles
+	var bfiles []BoltFiles
+
+	var bcount int64 = 0
+	var ncount int64 = 0
+	var dcount int64 = 0
+
+	if FileExists(dbf) {
+
+		bf.Name = dbf
+		bfiles = append(bfiles, bf)
+
+		bcount++
+
+	}
+
+	for {
+
+		dcount++
+		ndbf := fmt.Sprintf("%s/%s_%08d.bolt", dir, dbn, dcount)
+
+		if FileExists(ndbf) {
+
+			bcount++
+
+			bf.Name = ndbf
+			bfiles = append(bfiles, bf)
+
+		} else {
+			break
+		}
+
+	}
+
+	if bcount == 0 {
+
+		db, err := BoltOpenWrite(dbf, bfilemode, timeout, opentries, freelist)
+		if err != nil {
+			fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+			os.Exit(1)
+		}
+
+		err = os.Chmod(dbf, filemode)
+		if err != nil {
+			fmt.Printf("Can`t chmod db error | DB [%s] | %v\n", dbf, err)
+			db.Close()
+			os.Exit(1)
+		}
+
+		// Keys Index Bucket
+
+		err = db.Update(func(tx *bolt.Tx) error {
+			_, err = tx.CreateBucketIfNotExists([]byte(ibucket))
+			if err != nil {
+				return err
+			}
+			return nil
+
+		})
+		if err != nil {
+			fmt.Printf("Can`t create index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+			db.Close()
+			os.Exit(1)
+		}
+
+		db.Close()
+
+		bf.Name = dbf
+		bfiles = append(bfiles, bf)
+
+		bcount++
+
+	}
+
+	for _, bfile := range bfiles {
+
+		ncount++
+
+		dbf = bfile.Name
+
+		lndb, err := os.Lstat(dbf)
+		if err != nil {
+			fmt.Printf("Can`t stat db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+			os.Exit(1)
+		}
+
+		if lndb.Mode()&os.ModeType != 0 {
+			fmt.Printf("Non-regular db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+			os.Exit(1)
+		}
+
+		indb, err := os.Stat(dbf)
+		if err != nil {
+			fmt.Printf("Can`t stat db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+			os.Exit(1)
+		}
+
+		bsize := indb.Size()
+
+		db, err := BoltOpenRead(dbf, bfilemode, timeout, opentries, freelist)
+		if err != nil {
+			fmt.Printf("Can`t open db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+			os.Exit(1)
+		}
+
+		keyexists, err := KeyExists(db, ibucket, file)
+		if err != nil {
+			fmt.Printf("Can`t check key of file in index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
+			db.Close()
+			os.Exit(1)
+		}
+
+		if keyexists != "" {
+			db.Close()
+			break
+		}
+
+		if ncount == bcount {
+
+			keyscnt, err := KeysCount(db, ibucket)
+			if err != nil {
+				fmt.Printf("Can`t count keys of all files in index db bucket error | File [%s] | DB [%s] | %v", file, dbf, err)
+				db.Close()
+				os.Exit(1)
+			}
+
+			if bsize >= smaxsize || keyscnt >= skeyscnt {
+
+				db.Close()
+				dbf = fmt.Sprintf("%s/%s_%08d.bolt", dir, dbn, ncount)
+				bucket = "wzd1"
+				break
+
+			}
+
+		}
+
+		db.Close()
+
 	}
 
 	pfile, err := os.OpenFile(abs, os.O_RDONLY, os.ModePerm)
@@ -2302,8 +2642,6 @@ func ZAPackSingle() {
 		var readbuffer bytes.Buffer
 		tee := io.TeeReader(rawbuffer, &readbuffer)
 
-		tbl := crc32.MakeTable(0xEDB88320)
-
 		crcdata := new(bytes.Buffer)
 
 		_, err = crcdata.ReadFrom(tee)
@@ -2325,7 +2663,7 @@ func ZAPackSingle() {
 
 		}
 
-		wcrc = crc32.Checksum(crcdata.Bytes(), tbl)
+		wcrc = crc32.Checksum(crcdata.Bytes(), ctbl32)
 
 		crcdata.Reset()
 
@@ -2633,8 +2971,6 @@ func ZAPackSingle() {
 		headbuffer = nil
 		readhead = Header{}
 
-		rtbl := crc32.MakeTable(0xEDB88320)
-
 		rcrcdata := new(bytes.Buffer)
 
 		_, err = rcrcdata.ReadFrom(pread)
@@ -2649,7 +2985,7 @@ func ZAPackSingle() {
 
 		}
 
-		rcrc = crc32.Checksum(rcrcdata.Bytes(), rtbl)
+		rcrc = crc32.Checksum(rcrcdata.Bytes(), ctbl32)
 
 		pdata = nil
 		rcrcdata.Reset()

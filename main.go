@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"flag"
 	"fmt"
+	"hash/crc32"
 	"os"
 	"os/signal"
 	"regexp"
@@ -47,6 +48,11 @@ type KeysIter struct {
 	val string
 }
 
+// BoltFiles : type for sharding bolt files
+type BoltFiles struct {
+	Name string
+}
+
 // Global Variables
 
 var (
@@ -57,6 +63,10 @@ var (
 	Uid int64
 	// Gid : System user GID
 	Gid int64
+
+	// CRC32 Table
+
+	ctbl32 = crc32.MakeTable(0xEDB88320)
 
 	wg       sync.WaitGroup
 	wgthread sync.WaitGroup
@@ -79,6 +89,8 @@ var (
 	show                  string
 	ifilemode             string
 	bfilemode             os.FileMode
+	skeyscnt              int   = 16384
+	smaxsize              int64 = 536870912
 	fmaxsize              int64 = 1048576
 	perbucket             int   = 1024
 	overwrite             bool  = false
@@ -91,8 +103,6 @@ var (
 	tmpdir                string
 	threads               int64 = 1
 	freelist              string
-
-	upgrade bool = false
 )
 
 // Interrupt : custom interrupt handler
@@ -123,9 +133,11 @@ func init() {
 	flag.StringVar(&single, "single", single, "--single=/path/to/file - pack or unpack one regular file (with --pack) or Bolt archive (with --unpack)")
 	flag.BoolVar(&pack, "pack", pack, "--pack - enables the mode for packing regular files from a list (with --list=), or a single regular file (with --single=) into Bolt archives")
 	flag.BoolVar(&unpack, "unpack", unpack, "--unpack - enables the mode for unpacking Bolt archives from the list (--list=), or a single Bolt archive (with --single=) into regular files")
-	flag.StringVar(&show, "show", show, "--show=/path/to/file.bolt - shows regular files and/or values in single Bolt archive")
+	flag.StringVar(&show, "show", show, "--show=/path/to/file.bolt - shows regular files and/or keys in single Bolt archive")
 	flag.StringVar(&ifilemode, "bfilemode", ifilemode, "--bfilemode=0640 - (0600-0666) permissions on Bolt archives when packing with UID and GID from the current user and group (default 0640)")
-	flag.Int64Var(&fmaxsize, "fmaxsize", fmaxsize, "--fmaxsize=1048576 -  the maximum allowed regular file size for writing to Bolt archives, otherwise it skips the file. Maximum value: 33554432 bytes")
+	flag.IntVar(&skeyscnt, "skeyscnt", skeyscnt, "--skeyscnt=16384 - the maximum allowed files and keys per single Bolt archive (per directory auto sharding). Maximum value: 131072 files/keys")
+	flag.Int64Var(&smaxsize, "smaxsize", smaxsize, "--smaxsize=536870912 - the maximum allowed Bolt archive size (per directory auto sharding). Maximum value: 1073741824 bytes")
+	flag.Int64Var(&fmaxsize, "fmaxsize", fmaxsize, "--fmaxsize=1048576 - the maximum allowed regular file size for writing to Bolt archives, otherwise it skips the file. Maximum value: 33554432 bytes")
 	flag.BoolVar(&overwrite, "overwrite", overwrite, "--overwrite - turns on the mode for overwriting regular files or files in Bolt archives when packing or unpacking")
 	flag.BoolVar(&ignore, "ignore", ignore, "--ignore - enables the mode for ignoring all errors when executing the mass packing or unpacking mode from the list. (If the threads are > 1, ignore mode is always enabled to continue execution of threads)")
 	flag.BoolVar(&ignorenot, "ignore-not", ignorenot, "--ignore-not - enables the mode for ignoring only those files that do not exist or to which access is denied. Valid when working in the mode of mass packing or unpacking according to the list")
@@ -143,7 +155,6 @@ func init() {
 	flag.BoolVar(&verbose, "verbose", verbose, "--verbose - enables verbose mode (incompatible with --progress)")
 	flag.BoolVar(&vprint, "version", vprint, "--version - print version")
 	flag.BoolVar(&help, "help", help, "--help - displays help")
-	flag.BoolVar(&upgrade, "upgrade", upgrade, "--upgrade - upgrade bolt archives to the latest version from a list (with --list=)")
 
 	flag.Parse()
 
@@ -163,7 +174,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	if !pack && !unpack && show == "" && !upgrade {
+	if !pack && !unpack && show == "" {
 		fmt.Printf("Can`t continue work without --pack or --unpack -or --show, use only one option | Pack [%t] | Unpack [%t] | Show [%s]\n", pack, unpack, show)
 		os.Exit(1)
 	}
@@ -178,7 +189,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	if show != "" && (pack || unpack || single != "" || list != "" || upgrade) {
+	if show != "" && (pack || unpack || single != "" || list != "") {
 		fmt.Printf("Can`t continue work with --show and other options, for show use only show option | Show [%s]\n", show)
 		os.Exit(1)
 	}
@@ -199,7 +210,7 @@ func init() {
 	}
 
 	if progress && verbose {
-		fmt.Printf("Can`t continue work with --progress and --overwrite together\n")
+		fmt.Printf("Can`t continue work with --progress and --verbose together\n")
 		os.Exit(1)
 	}
 
@@ -250,6 +261,12 @@ func init() {
 
 	}
 
+	mchskeyscnt := RBInt(skeyscnt, 4096, 131072)
+	Check(mchskeyscnt, fmt.Sprintf("%d", skeyscnt), DoExit)
+
+	mchsmaxsize := RBInt64(smaxsize, 33554432, 1073741824)
+	Check(mchsmaxsize, fmt.Sprintf("%d", smaxsize), DoExit)
+
 	mchfmaxsize := RBInt64(fmaxsize, 1, 33554432)
 	Check(mchfmaxsize, fmt.Sprintf("%d", fmaxsize), DoExit)
 
@@ -285,17 +302,7 @@ func init() {
 	mchlocktimeout := RBInt(locktimeout, 1, 3600)
 	Check(mchlocktimeout, fmt.Sprintf("%d", locktimeout), DoExit)
 
-	if upgrade && (pack || unpack || show != "") {
-		fmt.Printf("Can`t continue work with --pack and --unpack or --show together, use --upgrade option only with --list= option | List [%s]\n", list)
-		os.Exit(1)
-	}
-
-	if upgrade && list == "" {
-		fmt.Printf("Can`t continue work with --upgrade option and empty --list= option, use --upgrade option only with --list= option | List [%s]\n", list)
-		os.Exit(1)
-	}
-
-	if show == "" && !upgrade {
+	if show == "" {
 
 		switch {
 		case fdelete:
@@ -333,20 +340,12 @@ func init() {
 		}
 
 		if pack {
+			fmt.Printf("Info | Max Allowed Per Bolt Auto Sharding Files/Keys [%d]\n", skeyscnt)
+			fmt.Printf("Info | Max Allowed Per Bolt Auto Sharding Size [%d]\n", smaxsize)
 			fmt.Printf("Info | Max Allowed File Size [%d]\n", fmaxsize)
 		}
 
 		fmt.Printf("\n")
-
-	}
-
-	if upgrade {
-
-		threads = 1
-		verbose = true
-		progress = false
-
-		fmt.Printf("Info | Upgrade Mode [ENABLED]\n")
 
 	}
 
@@ -404,8 +403,6 @@ func main() {
 		ZAUnpackSingle()
 	case show != "":
 		ZAShowSingle()
-	case list != "" && upgrade:
-		ZAUpgrade()
 	}
 
 	wg.Wait()

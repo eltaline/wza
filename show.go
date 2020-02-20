@@ -37,8 +37,7 @@ func ZAShowSingle() {
 
 	abs := filepath.Clean(dir + "/" + file)
 
-	dbn := filepath.Base(dir)
-	dbf := filepath.Clean(dir + "/" + dbn + ".bolt")
+	dbf := filepath.Clean(uri)
 
 	if DirExists(abs) {
 		fmt.Printf("Skipping directory extract from list | Directory [%s]\n", abs)
@@ -177,12 +176,11 @@ func ZAShowSingle() {
 		modt := time.Unix(tmst, 0)
 		hmodt := modt.Format(time.UnixDate)
 		mode := strconv.FormatUint(uint64(readhead.Mode), 8)
-
-		crc := readhead.Crcs
+		crc := strconv.FormatUint(uint64(readhead.Crcs), 16)
 
 		readhead = Header{}
 
-		fmt.Printf("File [%s] | Size [%d] | Date [%s] | Mode [0%s] | CRC [%d] | Bucket: [%s]\n", rkey, dsize, hmodt, mode, crc, bucket)
+		fmt.Printf("File [%s] | Size [%d] | Date [%s] | Mode [0%s] | CRC [%s] | Bucket: [%s]\n", rkey, dsize, hmodt, mode, crc, bucket)
 
 		sum = sum + dsize
 		loopcount++
