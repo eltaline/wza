@@ -29,19 +29,6 @@ type Header struct {
 	Rsvr uint64
 }
 
-// OldHeader : type contains binary header fields
-type OldHeader struct {
-	Size uint64
-	Date uint32
-	Mode uint16
-	Uuid uint16
-	Guid uint16
-	Comp uint8
-	Encr uint8
-	Crcs uint32
-	Rsvr uint64
-}
-
 // KeysIter : type contains results of iteration through key and value pairs
 type KeysIter struct {
 	key string
