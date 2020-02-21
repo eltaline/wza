@@ -17,7 +17,7 @@ Section [command line]
 - -disablewriteintegrity
         --disablewriteintegrity - disables writing CRC checksums to the binary header for regular files in Bolt archives
 - -fmaxsize int
-        --fmaxsize=1048576 - the maximum allowed regular file size for writing to Bolt archives, otherwise it skips the file. Maximum value: 33554432 bytes (1048576 by default)
+        --fmaxsize=1048576 - the maximum allowed regular file size for writing to Bolt archives, otherwise it skips the file. Maximum value: 33554432 bytes (default 1048576)
 - -freelist string
         --freelist=hashmap - set free page list algorithm for Bolt archives, values: hashmap or array (default hashmap)
 - -help
@@ -29,7 +29,7 @@ Section [command line]
 - -list string
         --list=/path/to/list.txt - list of files or Bolt archives for packing or unpacking
 - -locktimeout int
-        locktimeout=5 - the maximum timeout for opening the Bolt archive in 1 attempt. Maximum value: 3600 (5 by default)
+        locktimeout=5 - the maximum timeout for opening the Bolt archive in 1 attempt. Maximum value: 3600 (default 5)
 - -overwrite
         --overwrite - turns on the mode for overwriting regular files or files in Bolt archives when packing or unpacking
 - -pack
@@ -38,6 +38,10 @@ Section [command line]
         --progress - enables the progress bar mode (incompatible with --verbose)
 - -single string
         --single=/path/to/file - pack or unpack one regular file (with --pack) or Bolt archive (with --unpack)
+- -skeyscnt int
+        --skeyscnt=16384 - the maximum allowed files and keys per single Bolt archive (per directory auto sharding). Maximum value: 131072 files/keys (default 16384)
+- -smaxsize int
+        --smaxsize=536870912 - the maximum allowed Bolt archive size (per directory auto sharding). Maximum value: 1073741824 bytes (default 536870912)
 - -show string
         --show=/path/to/file.bolt - shows regular files and/or values in single Bolt archive
 - -threads int

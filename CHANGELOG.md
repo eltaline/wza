@@ -1,3 +1,15 @@
+Version: 1.2.0
+========
+
+Added in version 1.2.0:
+
+- Parameters (--skeyscnt , --smaxsize), for per directory automatic sharding of Bolt archives
+- Project license changed to Apache License 2.0
+
+Fixed in version 1.2.0:
+
+- Minor bug fixes
+
 Version: 1.1.3
 ========
 

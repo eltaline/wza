@@ -7,12 +7,17 @@ for conversion regular files to Bolt аrchives and these unpacking. Archiver is 
 
 <img src="/images/wzd-scheme.png" alt="wZD Scheme"/>
 
-Current stable version: 1.1.3
+Current stable version: 1.2.0
 ========
 
 - <a href=/CHANGELOG.md>Changelog</a>
 
-Fixed in version 1.1.3:
+Added in version 1.2.0:
+
+- Parameters (--skeyscnt , --smaxsize) for per directory automatic sharding of Bolt archives
+- Project license changed to Apache License 2.0
+
+Fixed in version 1.2.0:
 
 - Minor bug fixes
 
