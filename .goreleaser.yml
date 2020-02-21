@@ -38,6 +38,7 @@ archives:
 
     files:
       - LICENSE
+      - NOTICE
 
 nfpms:
   -
@@ -50,7 +51,7 @@ nfpms:
     homepage: "https://wzd.dev/"
     maintainer: "Andrey Kuvshinov <dev@wzd.dev>"
     description: "Files in Bolt archiver. Used with wZD Server"
-    license: "BSD-3 Clause"
+    license: "Apache 2.0"
     name_template: "{{.ProjectName}}-{{.Version}}-{{.Os}}-{{.Arch}}"
 
     bindir: /usr/bin
@@ -60,6 +61,7 @@ nfpms:
 
     files:
       "LICENSE": "/usr/share/wza/LICENSE"
+      "NOTICE": "/usr/share/wza/NOTICE"
 
 scoop:
 
@@ -67,7 +69,7 @@ scoop:
     name: "Andrey Kuvshinov"
     email: dev@wzd.dev
   homepage: "https://wzd.dev/"
-  license: BSD-3 Clause
+  license: Apache 2.0
 
 brews:
  -
