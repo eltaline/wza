@@ -253,7 +253,7 @@ func ZAPackList() {
 					if err != nil {
 
 						fmt.Printf("Can`t open db for delayed compaction error | DB [%s] | %v\n", dbf, err)
-						keymutex.Unlock(dbf)
+						keymutex.UnLock(dbf)
 
 						if ignore {
 							continue
@@ -269,7 +269,7 @@ func ZAPackList() {
 
 						fmt.Printf("On the fly delayed compaction error | DB [%s] | %v\n", dbf, err)
 						db.Close()
-						keymutex.Unlock(dbf)
+						keymutex.UnLock(dbf)
 
 						if ignore {
 							continue
@@ -288,7 +288,7 @@ func ZAPackList() {
 
 						fmt.Printf("Can`t chmod db error | DB [%s] | %v\n", dbf, err)
 						db.Close()
-						keymutex.Unlock(dbf)
+						keymutex.UnLock(dbf)
 
 						if ignore {
 							continue
@@ -299,7 +299,7 @@ func ZAPackList() {
 					}
 
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 
 				} else {
 
@@ -806,7 +806,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			if err != nil {
 
 				fmt.Printf("Can`t open file error | File [%s] | Path [%s] | %v\n", file, abs, err)
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				if ignore || ignorenot {
 					continue
@@ -823,7 +823,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			if err != nil {
 
 				fmt.Printf("Can`t open/create db file error | File [%s] | DB [%s] | %v\n", file, dbf, err)
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -851,7 +851,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t chmod db error | DB [%s] | %v\n", dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -888,7 +888,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t create index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -925,7 +925,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t create size db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -962,7 +962,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t create time db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -999,7 +999,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t create count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -1027,7 +1027,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t check key of file in index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -1055,7 +1055,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				if fdelete {
 
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 
 					err = pfile.Close()
 					if err != nil {
@@ -1094,7 +1094,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 				}
 
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -1118,7 +1118,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t count buckets in count db bucket error | DB [%s] | %v\n", dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -1150,7 +1150,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t count keys of files in last db bucket error | DB [%s] | %v\n", dbf, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 
 					err = pfile.Close()
 					if err != nil {
@@ -1178,7 +1178,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t count bytes of files in last db bucket error | DB [%s] | %v\n", dbf, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 
 					err = pfile.Close()
 					if err != nil {
@@ -1230,7 +1230,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 						fmt.Printf("Can`t write bucket counter to count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 						db.Close()
-						keymutex.Unlock(dbf)
+						keymutex.UnLock(dbf)
 
 						err = pfile.Close()
 						if err != nil {
@@ -1266,7 +1266,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t count keys of files in last db bucket error | DB [%s] | %v\n", dbf, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 
 					err = pfile.Close()
 					if err != nil {
@@ -1294,7 +1294,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t count bytes of files in last db bucket error | DB [%s] | %v\n", dbf, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 
 					err = pfile.Close()
 					if err != nil {
@@ -1344,7 +1344,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t write bucket counter to count db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 
 					err = pfile.Close()
 					if err != nil {
@@ -1382,7 +1382,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t create db bucket error | Bucket [%s] | File [%s] | DB [%s] | %v\n", bucket, file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				err = pfile.Close()
 				if err != nil {
@@ -1412,7 +1412,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t read file to rawbuffer data error | File [%s] | Path [%s] | %v\n", file, abs, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 				rawbuffer.Reset()
 
 				err = pfile.Close()
@@ -1450,7 +1450,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t read tee crc data error | File [%s] | Path [%s] | %v\n", file, abs, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 					rawbuffer.Reset()
 					readbuffer.Reset()
 					crcdata.Reset()
@@ -1489,7 +1489,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Write binary header data to db error | File [%s] | DB [%s] | Header [%v] | %v\n", file, dbf, head, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 					rawbuffer.Reset()
 					readbuffer.Reset()
 					endbuffer.Reset()
@@ -1523,7 +1523,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t read readbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 					rawbuffer.Reset()
 					readbuffer.Reset()
 					endbuffer.Reset()
@@ -1563,7 +1563,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Write binary header data to db error | File [%s] | DB [%s] | Header [%v] | %v\n", file, dbf, head, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 					rawbuffer.Reset()
 					endbuffer.Reset()
 					//					head = Header{}
@@ -1596,7 +1596,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t read rawbuffer data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 					rawbuffer.Reset()
 					endbuffer.Reset()
 
@@ -1647,7 +1647,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t write a file to db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 				endbuffer.Reset()
 
 				err = pfile.Close()
@@ -1693,7 +1693,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t write key to index db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 				endbuffer.Reset()
 
 				err = pfile.Close()
@@ -1739,7 +1739,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t write key to size db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 				endbuffer.Reset()
 
 				err = pfile.Close()
@@ -1785,7 +1785,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 				fmt.Printf("Can`t write key to time db bucket error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 				db.Close()
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 				endbuffer.Reset()
 
 				err = pfile.Close()
@@ -1815,7 +1815,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			if err != nil {
 
 				fmt.Printf("Close after read file error | File [%s] | Path [%s] | %v\n", file, abs, err)
-				keymutex.Unlock(dbf)
+				keymutex.UnLock(dbf)
 
 				if ignore {
 					continue
@@ -1846,7 +1846,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t get data by key from db error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 					pdata = nil
 
 					if ignore {
@@ -1868,7 +1868,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", file, dbf, headbuffer, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 					pdata = nil
 					headbuffer = nil
 
@@ -1887,7 +1887,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Read binary header data from db error | File [%s] | DB [%s] | Header Buffer [%p] | %v\n", file, dbf, hread, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 					pdata = nil
 					headbuffer = nil
 					readhead = Header{}
@@ -1910,7 +1910,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("Can`t read pread data error | File [%s] | DB [%s] | %v\n", file, dbf, err)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 					pdata = nil
 					rcrcdata.Reset()
 
@@ -1931,7 +1931,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 
 					fmt.Printf("CRC read file error | File [%s] | DB [%s] | Have CRC [%v] | Awaiting CRC [%v]\n", file, dbf, rcrc, wcrc)
 					db.Close()
-					keymutex.Unlock(dbf)
+					keymutex.UnLock(dbf)
 
 					if ignore {
 						continue
@@ -1944,7 +1944,7 @@ func ZAPackListThread(keymutex *mmutex.Mutex, mcmp map[string]bool, listname str
 			}
 
 			db.Close()
-			keymutex.Unlock(dbf)
+			keymutex.UnLock(dbf)
 
 			if keyexists != "" {
 
