@@ -1,3 +1,9 @@
+Version: 1.2.1
+========
+
+- Update to Go 1.14
+- Transition to Go module support
+
 Version: 1.2.0
 ========
 

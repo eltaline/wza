@@ -134,7 +134,7 @@ func Interrupt() {
 
 func init() {
 
-	var version string = "1.2.0"
+	var version string = "1.2.1"
 	var vprint bool = false
 	var help bool = false
 
