@@ -423,7 +423,6 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string, wgthread 
 
 			if FileExists(dabs) && !overwrite {
 				loopcount++
-				bar.IncrBy(1)
 				continue
 			}
 
@@ -638,13 +637,13 @@ func ZAUnpackListThread(listname string, p *mpb.Progress, name string, wgthread 
 
 			elapsed := float64(time.Since(start)) / float64(time.Millisecond)
 
-			bar.IncrBy(1)
-
 			if verbose {
 				fmt.Printf("Unpacking file | File [%s] | Path [%s] | Elapsed [%f] | DB [%s]\n", rkey, dabs, elapsed, dbf)
 			}
 
 		}
+
+		bar.IncrBy(1)
 
 		if fdelete {
 
