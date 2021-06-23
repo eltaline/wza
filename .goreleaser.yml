@@ -52,16 +52,19 @@ nfpms:
     maintainer: "Andrey Kuvshinov <dev@wzd.dev>"
     description: "Files in Bolt archiver. Used with wZD Server"
     license: "Apache 2.0"
-    name_template: "{{.ProjectName}}-{{.Version}}-{{.Os}}-{{.Arch}}"
+    file_name_template: "{{.ProjectName}}-{{.Version}}-{{.Os}}-{{.Arch}}"
 
     bindir: /usr/bin
 
     empty_folders:
       - /usr/share/wza
 
-    files:
-      "LICENSE": "/usr/share/wza/LICENSE"
-      "NOTICE": "/usr/share/wza/NOTICE"
+    contents:
+      - src: "LICENSE"
+        dst: "/usr/share/wzd/LICENSE"
+
+      - src: "NOTICE"
+        dst: "/usr/share/wzd/NOTICE"
 
 scoop:
 
