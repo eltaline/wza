@@ -190,16 +190,9 @@ Guarantees
 
 No warranty is provided for this software. Please test first
 
-Donations
-========
-
-<a href="https://www.paypal.me/xwzd"><img src="/images/paypal.png"><a/>
-
 Contacts
 ========
 
-- E-mail: dev@wzd.dev
-- wZD website: https://wzd.dev
 - Company website: <a href="https://elta.ee">Eltaline</a>
 
 ```
